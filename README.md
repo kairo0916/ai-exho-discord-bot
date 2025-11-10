@@ -87,3 +87,37 @@ DB_HOST=MairaDB伺服器IP
 DB_PORT=MairaDB伺服器端口
 DB_POOL_MAX=MairaDB連線最大數量，例如 20
 ```
+
+### 步驟 2：查看 `./data` 資料夾內有沒有包含這些：
+
+請添加下列檔案並輸入內容。
+
+1. `banlist.json` = `[]`
+2. `report_time.json` = `{}`
+3. `last_status_message.json` = `{}`
+4. `marriage.json` = `{}`
+5. `used_command.txt` = 不需要輸入，程式自動偵測，但也請新增此檔案。
+
+### 步驟 3：啟動機器人
+
+設定完成後，使用指令把機器人開機：
+
+```bash
+node bot.js
+```
+
+## ℹ️ 功能總覽
+
+下列為目前機器人擁有的大概功能：
+
+---
+
+### 👤 記憶系統
+• 描述：長期保存使用者與機器人的對話，優化上下文功能。
+
+---
+
+### 🖼️ 圖片檢視
+• 描述：使用 Gemini 2.0 Flash 模型查看圖片（若使用此功能請填寫 GEMINI_API_KEY。
+
+## 目前功能尚未完善，還請各位踴躍投稿或回報👍
