@@ -20,8 +20,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-
-require('./upload.js');
 require('./github_update.js');
 const startTime = process.hrtime.bigint();
 require('dotenv').config();
@@ -628,6 +626,15 @@ client.on('ready', async () => {
   setInterval(updateStatus, 10000);
   updateStatus();
 });
+
+setTimeout(() => {
+  console.log('===========');
+  console.log('BOT NAME: Exho');
+  console.log(`BOT ID: ${process.env.DISCORD_BOT_ID}`);
+  console.log('===========');
+  console.log(`VERSION: ${process.env.BOT_VERSION}`);
+  console.log('===========');
+}, 5000);
 
 process.on('SIGINT', () => {
   console.warn('正在關閉 Exho...');

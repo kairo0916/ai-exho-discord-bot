@@ -6,11 +6,11 @@
 5 silly config load:file:/usr/local/etc/npmrc
 6 verbose title npm install
 7 verbose argv "install"
-8 verbose logfile logs-max:10 dir:/home/container/.npm/_logs/2025-11-11T15_30_01_816Z-
-9 verbose logfile /home/container/.npm/_logs/2025-11-11T15_30_01_816Z-debug-0.log
+8 verbose logfile logs-max:10 dir:/home/container/.npm/_logs/2025-11-11T22_40_02_070Z-
+9 verbose logfile /home/container/.npm/_logs/2025-11-11T22_40_02_070Z-debug-0.log
 10 silly logfile start cleaning logs, removing 1 files
-11 silly logfile done cleaning log files
-12 silly packumentCache heap:2197815296 maxSize:549453824 maxEntrySize:274726912
+11 silly packumentCache heap:2197815296 maxSize:549453824 maxEntrySize:274726912
+12 silly logfile done cleaning log files
 13 silly idealTree buildDeps
 14 silly reify moves {}
 15 silly audit bulk request {
@@ -48,8 +48,6 @@
 15 silly audit   '@aws-sdk/util-user-agent-node': [ '3.921.0' ],
 15 silly audit   '@aws-sdk/xml-builder': [ '3.921.0' ],
 15 silly audit   '@aws/lambda-invoke-store': [ '0.1.1' ],
-15 silly audit   '@bufbuild/protobuf': [ '2.10.0' ],
-15 silly audit   '@derhuerst/http-basic': [ '8.2.4' ],
 15 silly audit   '@discordjs/builders': [ '1.13.0' ],
 15 silly audit   '@discordjs/collection': [ '1.5.3', '2.1.1' ],
 15 silly audit   '@discordjs/formatters': [ '0.6.1' ],
@@ -105,7 +103,7 @@
 15 silly audit   '@smithy/util-uri-escape': [ '4.2.0' ],
 15 silly audit   '@smithy/util-waiter': [ '4.2.4' ],
 15 silly audit   '@smithy/uuid': [ '1.1.0' ],
-15 silly audit   '@types/node': [ '24.9.2', '10.17.60' ],
+15 silly audit   '@types/node': [ '24.9.2' ],
 15 silly audit   '@types/ws': [ '8.18.1' ],
 15 silly audit   '@vladfrangu/async_event_emitter': [ '2.4.7' ],
 15 silly audit   abbrev: [ '1.1.1' ],
@@ -120,9 +118,6 @@
 15 silly audit   asynckit: [ '0.4.0' ],
 15 silly audit   axios: [ '1.13.1' ],
 15 silly audit   'balanced-match': [ '1.0.2' ],
-15 silly audit   'bare-addon-resolve': [ '1.9.6' ],
-15 silly audit   'bare-module-resolve': [ '1.11.3' ],
-15 silly audit   'bare-semver': [ '1.0.2' ],
 15 silly audit   'base64-js': [ '1.5.1' ],
 15 silly audit   'binary-extensions': [ '2.3.0' ],
 15 silly audit   'binary-version': [ '7.1.0' ],
@@ -131,10 +126,8 @@
 15 silly audit   'brace-expansion': [ '1.1.12' ],
 15 silly audit   braces: [ '3.0.3' ],
 15 silly audit   buffer: [ '6.0.3' ],
-15 silly audit   'buffer-from': [ '1.1.2' ],
 15 silly audit   'call-bind-apply-helpers': [ '1.0.2' ],
 15 silly audit   'call-bound': [ '1.0.4' ],
-15 silly audit   caseless: [ '0.12.0' ],
 15 silly audit   chalk: [ '4.1.2' ],
 15 silly audit   chokidar: [ '3.6.0' ],
 15 silly audit   chownr: [ '2.0.0' ],
@@ -145,7 +138,6 @@
 15 silly audit   'color-support': [ '1.1.3' ],
 15 silly audit   'combined-stream': [ '1.0.8' ],
 15 silly audit   'concat-map': [ '0.0.1' ],
-15 silly audit   'concat-stream': [ '2.0.0' ],
 15 silly audit   'console-control-strings': [ '1.1.0' ],
 15 silly audit   'convert-hrtime': [ '5.0.0' ],
 15 silly audit   convict: [ '6.2.4' ],
@@ -160,7 +152,6 @@
 15 silly audit   dotenv: [ '16.6.1' ],
 15 silly audit   'dunder-proto': [ '1.0.1' ],
 15 silly audit   'emoji-regex': [ '8.0.0' ],
-15 silly audit   'env-paths': [ '2.2.1' ],
 15 silly audit   'es-define-property': [ '1.0.1' ],
 15 silly audit   'es-errors': [ '1.3.0' ],
 15 silly audit   'es-object-atoms': [ '1.1.1' ],
@@ -172,7 +163,6 @@
 15 silly audit   'signal-exit': [ '4.1.0', '3.0.7' ],
 15 silly audit   'fast-deep-equal': [ '3.1.3' ],
 15 silly audit   'fast-xml-parser': [ '5.2.5' ],
-15 silly audit   'ffmpeg-static': [ '5.2.0' ],
 15 silly audit   'fill-range': [ '7.1.1' ],
 15 silly audit   'find-versions': [ '6.0.0' ],
 15 silly audit   'follow-redirects': [ '1.15.11' ],
@@ -201,7 +191,6 @@
 15 silly audit   'has-unicode': [ '2.0.1' ],
 15 silly audit   hasown: [ '2.0.2' ],
 15 silly audit   'http-cookie-agent': [ '7.0.2' ],
-15 silly audit   'http-response-object': [ '3.0.2' ],
 15 silly audit   'human-signals': [ '5.0.0' ],
 15 silly audit   ieee754: [ '1.2.1' ],
 15 silly audit   'ignore-by-default': [ '1.0.1' ],
@@ -227,7 +216,6 @@
 15 silly audit   semver: [ '6.3.1', '7.7.3' ],
 15 silly audit   'math-intrinsics': [ '1.1.0' ],
 15 silly audit   'merge-stream': [ '2.0.0' ],
-15 silly audit   meriyah: [ '6.1.4' ],
 15 silly audit   'mime-db': [ '1.52.0' ],
 15 silly audit   'mime-types': [ '2.1.35' ],
 15 silly audit   'mimic-fn': [ '4.0.0' ],
@@ -256,21 +244,16 @@
 15 silly audit   'p-event': [ '6.0.1' ],
 15 silly audit   'p-timeout': [ '6.1.4', '5.1.0' ],
 15 silly audit   'p-queue': [ '7.4.1' ],
-15 silly audit   'parse-cache-control': [ '1.0.1' ],
 15 silly audit   'parse-ms': [ '2.1.0' ],
 15 silly audit   'path-is-absolute': [ '1.0.1' ],
 15 silly audit   picomatch: [ '2.3.1' ],
-15 silly audit   'play-audio': [ '0.5.2' ],
-15 silly audit   'play-dl': [ '1.9.7' ],
 15 silly audit   'pretty-ms': [ '7.0.1' ],
 15 silly audit   'prism-media': [ '1.3.5' ],
 15 silly audit   process: [ '0.11.10' ],
-15 silly audit   progress: [ '2.0.3' ],
 15 silly audit   'proxy-from-env': [ '1.1.0' ],
 15 silly audit   'pstree.remy': [ '1.1.8' ],
 15 silly audit   qs: [ '6.14.0' ],
 15 silly audit   readdirp: [ '3.6.0' ],
-15 silly audit   'require-addon': [ '1.2.0' ],
 15 silly audit   rimraf: [ '3.0.2' ],
 15 silly audit   'safe-buffer': [ '5.2.1' ],
 15 silly audit   sax: [ '1.4.3' ],
@@ -284,7 +267,6 @@
 15 silly audit   'side-channel-map': [ '1.0.1' ],
 15 silly audit   'side-channel-weakmap': [ '1.0.2' ],
 15 silly audit   'simple-update-notifier': [ '2.0.0' ],
-15 silly audit   'sodium-native': [ '4.3.3' ],
 15 silly audit   string_decoder: [ '1.3.0' ],
 15 silly audit   'string-width': [ '4.2.3' ],
 15 silly audit   'strip-ansi': [ '6.0.1' ],
@@ -303,7 +285,6 @@
 15 silly audit   'ts-mixer': [ '6.0.4' ],
 15 silly audit   tslib: [ '2.8.1' ],
 15 silly audit   'type-fest': [ '4.41.0' ],
-15 silly audit   typedarray: [ '0.0.6' ],
 15 silly audit   undefsafe: [ '2.0.5' ],
 15 silly audit   'undici-types': [ '7.16.0' ],
 15 silly audit   universalify: [ '2.0.1' ],
@@ -318,12 +299,9 @@
 15 silly audit   ws: [ '8.18.3' ],
 15 silly audit   yallist: [ '4.0.0' ],
 15 silly audit   'yargs-parser': [ '20.2.9' ],
-15 silly audit   'youtube-dl-exec': [ '3.0.26' ],
-15 silly audit   'youtubei.js': [ '16.0.1' ],
-15 silly audit   'yt-dlp-wrap': [ '2.3.12' ],
-15 silly audit   'ytdl-core': [ '4.11.5' ]
+15 silly audit   'youtube-dl-exec': [ '3.0.26' ]
 15 silly audit }
-16 http fetch POST 200 https://registry.npmjs.org/-/npm/v1/security/advisories/bulk 678ms
+16 http fetch POST 200 https://registry.npmjs.org/-/npm/v1/security/advisories/bulk 613ms
 17 silly audit report {
 17 silly audit report   '@discordjs/opus': [
 17 silly audit report     {
@@ -338,10 +316,10 @@
 17 silly audit report   ]
 17 silly audit report }
 18 silly packumentCache corgi:https://registry.npmjs.org/@discordjs%2fopus cache-miss
-19 http cache https://registry.npmjs.org/@discordjs%2fopus 41ms (cache hit)
+19 http fetch GET 200 https://registry.npmjs.org/@discordjs%2fopus 717ms (cache revalidated)
 20 silly packumentCache corgi:https://registry.npmjs.org/@discordjs%2fopus set size:25389 disposed:false
 21 silly packumentCache corgi:https://registry.npmjs.org/prism-media cache-miss
-22 http cache https://registry.npmjs.org/prism-media 14ms (cache hit)
+22 http fetch GET 200 https://registry.npmjs.org/prism-media 63ms (cache revalidated)
 23 silly packumentCache corgi:https://registry.npmjs.org/prism-media set size:49425 disposed:false
 24 verbose cwd /home/container
 25 verbose os Linux 5.15.0-134-generic

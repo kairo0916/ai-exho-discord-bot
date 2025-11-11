@@ -75,6 +75,8 @@ Rename `.env.Example` to `.env` and fill in the required values.
 # .env
 
 DISCORD_TOKEN=Discord-Bot-Token
+DISCORD_BOT_ID=Discord-Bot-Id
+DISCORD_SECURE_KEY=Discord-Bot-Secure-Key
 COHERE_API_KEY=Cohere-api-key
 URL_CHECK_API_KEY=Optional
 IP_LOOKUP_API_KEY=Optional
