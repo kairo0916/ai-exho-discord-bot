@@ -1,0 +1,38 @@
+0 verbose cli /usr/local/bin/node /usr/local/bin/npm
+1 info using npm@11.6.2
+2 info using node@v20.19.5
+3 silly config load:file:/usr/local/lib/node_modules/npm/npmrc
+4 silly config load:file:/home/container/.npmrc
+5 silly config load:file:/usr/local/etc/npmrc
+6 verbose title npm install youtube-dl-exec
+7 verbose argv "install" "youtube-dl-exec"
+8 verbose logfile logs-max:10 dir:/home/container/.npm/_logs/2025-11-11T16_42_07_929Z-
+9 verbose logfile /home/container/.npm/_logs/2025-11-11T16_42_07_929Z-debug-0.log
+10 silly logfile start cleaning logs, removing 1 files
+11 silly logfile done cleaning log files
+12 silly packumentCache heap:2197815296 maxSize:549453824 maxEntrySize:274726912
+13 verbose stack JSONParseError: Invalid package.json: JSONParseError: Expected double-quoted property name in JSON at position 610 while parsing near "...queue\": \"^7.4.1\",\n  },\n  \"devDependencie..."
+13 verbose stack     at parse (/usr/local/lib/node_modules/npm/node_modules/@npmcli/package-json/lib/read-package.js:19:21)
+13 verbose stack     at PackageJson.fromJSON (/usr/local/lib/node_modules/npm/node_modules/@npmcli/package-json/lib/index.js:162:22)
+13 verbose stack     at PackageJson.load (/usr/local/lib/node_modules/npm/node_modules/@npmcli/package-json/lib/index.js:157:17)
+13 verbose stack     at async PackageJson.normalize (/usr/local/lib/node_modules/npm/node_modules/@npmcli/package-json/lib/index.js:117:5)
+13 verbose stack     at async #initTree (/usr/local/lib/node_modules/npm/node_modules/@npmcli/arborist/lib/arborist/build-ideal-tree.js:284:34)
+13 verbose stack     at async Arborist.buildIdealTree (/usr/local/lib/node_modules/npm/node_modules/@npmcli/arborist/lib/arborist/build-ideal-tree.js:179:7)
+13 verbose stack     at async Promise.all (index 1)
+13 verbose stack     at async Arborist.reify (/usr/local/lib/node_modules/npm/node_modules/@npmcli/arborist/lib/arborist/reify.js:114:5)
+13 verbose stack     at async Install.exec (/usr/local/lib/node_modules/npm/lib/commands/install.js:150:5)
+13 verbose stack     at async Npm.exec (/usr/local/lib/node_modules/npm/lib/npm.js:208:9)
+14 error code EJSONPARSE
+15 error JSON.parse Invalid package.json: JSONParseError: Expected double-quoted property name in JSON at position 610 while parsing near "...queue\": \"^7.4.1\",\n  },\n  \"devDependencie..."
+16 error JSON.parse Failed to parse JSON data.
+16 error JSON.parse Note: package.json must be actual JSON, not just JavaScript.
+17 silly unfinished npm timer reify 1762879328468
+18 silly unfinished npm timer reify:loadTrees 1762879328469
+19 silly unfinished npm timer idealTree:init 1762879328471
+20 verbose cwd /home/container
+21 verbose os Linux 5.15.0-134-generic
+22 verbose node v20.19.5
+23 verbose npm  v11.6.2
+24 verbose exit 1
+25 verbose code 1
+26 error A complete log of this run can be found in: /home/container/.npm/_logs/2025-11-11T16_42_07_929Z-debug-0.log

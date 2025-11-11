@@ -2,7 +2,7 @@ const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const fs = require('fs-extra');
 const path = require('path');
 
-const REPORT_USER_ID = '1433736270311587910'; // 替換成管理員的 USERID
+const REPORT_USER_ID = process.env.DEV_USER?.split(',').map(id => id.trim()) || []
 const COOLDOWN_SECONDS = 30 * 60;
 const DATA_FILE = path.join(__dirname, '../../data/report_time.json');
 const UPDATE_INTERVAL = 100; let cooldownData = {};

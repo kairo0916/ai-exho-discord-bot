@@ -21,6 +21,7 @@
 // SOFTWARE.
 
 
+require('./upload.js');
 require('./github_update.js');
 const startTime = process.hrtime.bigint();
 require('dotenv').config();

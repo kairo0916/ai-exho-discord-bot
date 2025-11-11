@@ -6,7 +6,6 @@ const { execSync } = require('child_process');
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN?.trim();
 if (!GITHUB_TOKEN) {
   console.error('錯誤：.env 缺少 GITHUB_TOKEN');
-  process.exit(1);
 }
 
 // 固定內容
