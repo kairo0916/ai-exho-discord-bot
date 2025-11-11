@@ -1,0 +1,8 @@
+.env
+node_modules/
+data/user/*
+!data/user/
+data/*.json
+*.log
+update.zip
+update-temp/
