@@ -1,4 +1,3 @@
-// upload.js - 你專用上傳工具（不會上傳自己）
 require('dotenv').config();
 const fs = require('fs-extra');
 const path = require('path');

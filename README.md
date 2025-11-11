@@ -2,11 +2,11 @@
 
 <p align="center">
   <a href="https://discord.gg/umKvqHj4DC">
-    <img src="https://img.shields.io/discord/1212823415204085770?color=7289DA&label=支援群&logo=discord&style=for-the-badge" alt="Discord">
+    <img src="https://img.shields.io/discord/1212823415204085770?color=7289DA&label=Support%20Server&logo=discord&style=for-the-badge" alt="Discord">
   </a>
 </p>
 
-**中文 | [English](README_en.md)**
+**[繁體中文](README.md) | [English](README_en.md)**
 
 ---
 
