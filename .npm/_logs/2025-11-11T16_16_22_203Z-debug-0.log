@@ -6,11 +6,11 @@
 5 silly config load:file:/usr/local/etc/npmrc
 6 verbose title npm install
 7 verbose argv "install"
-8 verbose logfile logs-max:10 dir:/home/container/.npm/_logs/2025-11-11T10_12_34_967Z-
-9 verbose logfile /home/container/.npm/_logs/2025-11-11T10_12_34_967Z-debug-0.log
+8 verbose logfile logs-max:10 dir:/home/container/.npm/_logs/2025-11-11T16_16_22_203Z-
+9 verbose logfile /home/container/.npm/_logs/2025-11-11T16_16_22_203Z-debug-0.log
 10 silly logfile start cleaning logs, removing 1 files
-11 silly logfile done cleaning log files
-12 silly packumentCache heap:2197815296 maxSize:549453824 maxEntrySize:274726912
+11 silly packumentCache heap:2197815296 maxSize:549453824 maxEntrySize:274726912
+12 silly logfile done cleaning log files
 13 silly idealTree buildDeps
 14 silly reify moves {}
 15 silly audit bulk request {
@@ -323,7 +323,7 @@
 15 silly audit   'yt-dlp-wrap': [ '2.3.12' ],
 15 silly audit   'ytdl-core': [ '4.11.5' ]
 15 silly audit }
-16 http fetch POST 200 https://registry.npmjs.org/-/npm/v1/security/advisories/bulk 557ms
+16 http fetch POST 200 https://registry.npmjs.org/-/npm/v1/security/advisories/bulk 625ms
 17 silly audit report {
 17 silly audit report   '@discordjs/opus': [
 17 silly audit report     {
@@ -338,10 +338,10 @@
 17 silly audit report   ]
 17 silly audit report }
 18 silly packumentCache corgi:https://registry.npmjs.org/@discordjs%2fopus cache-miss
-19 http cache https://registry.npmjs.org/@discordjs%2fopus 43ms (cache hit)
+19 http cache https://registry.npmjs.org/@discordjs%2fopus 23ms (cache hit)
 20 silly packumentCache corgi:https://registry.npmjs.org/@discordjs%2fopus set size:25389 disposed:false
 21 silly packumentCache corgi:https://registry.npmjs.org/prism-media cache-miss
-22 http cache https://registry.npmjs.org/prism-media 12ms (cache hit)
+22 http cache https://registry.npmjs.org/prism-media 11ms (cache hit)
 23 silly packumentCache corgi:https://registry.npmjs.org/prism-media set size:49425 disposed:false
 24 verbose cwd /home/container
 25 verbose os Linux 5.15.0-134-generic

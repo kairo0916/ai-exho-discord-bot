@@ -26,6 +26,24 @@
 
 ---
 
+## 📲 展示功能
+
+![alt text](image/chat.jpg)
+![alt text](image/image.jpg)
+
+---
+
+## 🔧 開始使用
+
+### 🖥️ 架設需求
+
+*   **基本依賴項目：**
+    *   [Node.js 18+](https://nodejs.org/zh-tw/download)
+    *   [Discord.js](https://discord.js.org/) （npm install discord.js）
+    *   [`package.json`]
+*   **記憶體需求：**
+    *   **RAM**：建議使用 500MB 以上記憶體。
+
 ## 🛠 安裝與部署
 ```bash
 # 一行一行複製

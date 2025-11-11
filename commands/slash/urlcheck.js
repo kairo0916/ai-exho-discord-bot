@@ -1,4 +1,3 @@
-// commands/slash/urlcheck.js
 const {
   SlashCommandBuilder,
   EmbedBuilder,
@@ -177,7 +176,6 @@ module.exports = {
   }
 };
 
-// === 主畫面 Embed ===
 function createMainEmbed(analysis) {
   const score = analysis.score;
   const color = score >= 80 ? 0x00FF00 : score >= 60 ? 0xFFFF00 : 0xFF0000;
@@ -213,14 +211,12 @@ function createMainEmbed(analysis) {
     .setTimestamp();
 }
 
-// === 圖示（用 Discord 內建 emoji，避免外連失敗）===
 function getScoreIcon(score) {
-  if (score >= 80) return 'https://i.imgur.com/8OKIGqA.png'; // 綠色盾牌
-  if (score >= 60) return 'https://i.imgur.com/8OKIGqA.png'; // 黃色盾牌
-  return 'https://i.imgur.com/8OKIGqA.png'; // 紅色盾牌
+  if (score >= 80) return 'https://i.imgur.com/8OKIGqA.png';
+  if (score >= 60) return 'https://i.imgur.com/8OKIGqA.png';
+  return 'https://i.imgur.com/8OKIGqA.png';
 }
 
-// === 詳細展開 ===
 function createDetailEmbed(analysis) {
   const embed = new EmbedBuilder()
     .setTitle('詳細安全分析')
@@ -241,7 +237,6 @@ function createDetailEmbed(analysis) {
   return embed;
 }
 
-// === 按鈕列 ===
 function createActionRow() {
   return new ActionRowBuilder().addComponents(
     new ButtonBuilder().setCustomId('show_detail').setLabel('查看詳細').setStyle(ButtonStyle.Primary),
@@ -250,7 +245,6 @@ function createActionRow() {
   );
 }
 
-// === Collector（按鈕不消失 + 續命）===
 function setupCollector(interaction, input, analysis, currentEmbed, currentRow) {
   const collector = interaction.channel.createMessageComponentCollector({
     filter: i => i.user.id === interaction.user.id,

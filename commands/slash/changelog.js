@@ -1,4 +1,3 @@
-// commands/slash/changelog.js
 const {
   SlashCommandBuilder,
   EmbedBuilder,
@@ -74,7 +73,7 @@ module.exports = {
   async execute(interaction) {
     const summaryEmbed = new EmbedBuilder()
       .setTitle('Exho 機器人更新日誌')
-      .setDescription(`**ℹ️ 目前最新版本為: ${CURRENT_VERSION}**\n**🔗 支援群: ${SERVER_LINK} **`)
+      .setDescription(`**ℹ️ 目前最新版本為: ${CURRENT_VERSION}**\n**🔗 支援群: ${SERVER_LINK} **`) // 這個可以修改，換行記得用 \n
       .setFooter({ text: 'Exho' })
       .setColor(0x00AAFF)
       .setTimestamp();

@@ -6,15 +6,15 @@
 5 silly config load:file:/usr/local/etc/npmrc
 6 verbose title npm install youtube-dl-exec
 7 verbose argv "install" "youtube-dl-exec"
-8 verbose logfile logs-max:10 dir:/home/container/.npm/_logs/2025-11-11T13_45_41_490Z-
-9 verbose logfile /home/container/.npm/_logs/2025-11-11T13_45_41_490Z-debug-0.log
+8 verbose logfile logs-max:10 dir:/home/container/.npm/_logs/2025-11-11T15_29_46_506Z-
+9 verbose logfile /home/container/.npm/_logs/2025-11-11T15_29_46_506Z-debug-0.log
 10 silly logfile start cleaning logs, removing 1 files
-11 silly logfile done cleaning log files
-12 silly packumentCache heap:2197815296 maxSize:549453824 maxEntrySize:274726912
+11 silly packumentCache heap:2197815296 maxSize:549453824 maxEntrySize:274726912
+12 silly logfile done cleaning log files
 13 silly idealTree buildDeps
 14 silly fetch manifest youtube-dl-exec@^3.0.26
 15 silly packumentCache full:https://registry.npmjs.org/youtube-dl-exec cache-miss
-16 http fetch GET 200 https://registry.npmjs.org/youtube-dl-exec 895ms (cache revalidated)
+16 http fetch GET 200 https://registry.npmjs.org/youtube-dl-exec 1098ms (cache revalidated)
 17 silly packumentCache full:https://registry.npmjs.org/youtube-dl-exec set size:499104 disposed:false
 18 silly placeDep ROOT youtube-dl-exec@3.0.26 REPLACE for: exho-bot@1.0.0 want: ^3.0.26
 19 silly reify moves {}
@@ -328,7 +328,7 @@
 20 silly audit   'ytdl-core': [ '4.11.5' ],
 20 silly audit   'youtube-dl-exec': [ '3.0.26' ]
 20 silly audit }
-21 http fetch POST 200 https://registry.npmjs.org/-/npm/v1/security/advisories/bulk 379ms
+21 http fetch POST 200 https://registry.npmjs.org/-/npm/v1/security/advisories/bulk 298ms
 22 silly audit report {
 22 silly audit report   '@discordjs/opus': [
 22 silly audit report     {
@@ -343,14 +343,15 @@
 22 silly audit report   ]
 22 silly audit report }
 23 silly packumentCache corgi:https://registry.npmjs.org/@discordjs%2fopus cache-miss
-24 http fetch GET 200 https://registry.npmjs.org/@discordjs%2fopus 1445ms (cache revalidated)
+24 http fetch GET 200 https://registry.npmjs.org/@discordjs%2fopus 1431ms (cache revalidated)
 25 silly packumentCache corgi:https://registry.npmjs.org/@discordjs%2fopus set size:25389 disposed:false
 26 silly packumentCache corgi:https://registry.npmjs.org/prism-media cache-miss
-27 http fetch GET 200 https://registry.npmjs.org/prism-media 656ms (cache revalidated)
-28 silly packumentCache corgi:https://registry.npmjs.org/prism-media set size:49425 disposed:false
-29 verbose cwd /home/container
-30 verbose os Linux 5.15.0-134-generic
-31 verbose node v20.19.5
-32 verbose npm  v11.6.2
-33 verbose exit 0
-34 info ok
+27 http fetch GET https://registry.npmjs.org/prism-media attempt 1 failed with ECONNRESET
+28 http fetch GET 200 https://registry.npmjs.org/prism-media 11088ms (cache revalidated)
+29 silly packumentCache corgi:https://registry.npmjs.org/prism-media set size:49425 disposed:false
+30 verbose cwd /home/container
+31 verbose os Linux 5.15.0-134-generic
+32 verbose node v20.19.5
+33 verbose npm  v11.6.2
+34 verbose exit 0
+35 info ok

@@ -1,4 +1,3 @@
-// update.js - 終極更新腳本（支援首次拉取 + 保護本地資料）
 require('dotenv').config();
 const fs = require('fs-extra');
 const path = require('path');

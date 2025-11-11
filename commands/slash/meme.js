@@ -43,7 +43,7 @@ module.exports = {
         const res = await fetch('https://some-random-api.com/animal/cat');
         const data = await res.json();
         return {
-          title: '可愛貓貓梗 🐱',
+          title: '貓貓 😼',
           url: data.image,
           footer: '來源：Some Random API'
         };
