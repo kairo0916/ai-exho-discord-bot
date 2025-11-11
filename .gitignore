@@ -10,3 +10,6 @@ data/user/*
 !data/user/.gitkeep
 
 upload.js
+
+.npm
+.cache
