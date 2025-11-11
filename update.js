@@ -1,23 +1,28 @@
+// update.js - 終極更新腳本（支援首次拉取 + 保護本地資料）
+require('dotenv').config();
 const fs = require('fs-extra');
 const path = require('path');
 const { execSync } = require('child_process');
 const readline = require('readline');
 
-const rl = readline.createInterface({
-  input: process.stdin,
-  output: process.stdout
-});
+const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
 
-// 省略檔案
-const IGNORE = ['.env', './data', '.gitkeep', 'node_modules', '.git'];
+const GITHUB_API = 'https://api.github.com/repos/kairo0916/ai-exho-discord-bot/releases/latest';
+const ZIP_URL = 'https://github.com/kairo0916/ai-exho-discord-bot/archive/refs/heads/main.zip';
+const CURRENT_VERSION = process.env.BOT_VERSION || 'unknown';
 
-const GITHUB_API_URL = 'https://api.github.com/repos/kairo0916/ai-exho-discord-bot/releases/latest';
-const EXHO_URL = 'https://github.com/kairo0916/ai-exho-discord-bot/archive/refs/heads/main.zip';
-const CURRENT_VERSION = process.env.BOT_VERSION;
+// 絕對不會覆蓋的檔案
+const PROTECTED = [
+  '.env',
+  'data/user',
+  'data/',
+  'dailyQuote.txt'
+];
 
+// 只更新有變動的檔案
 async function getLatestVersion() {
   try {
-    const res = await fetch(GITHUB_API_URL);
+    const res = await fetch(GITHUB_API);
     const data = await res.json();
     return data.tag_name?.replace('v', '') || null;
   } catch {
@@ -25,90 +30,84 @@ async function getLatestVersion() {
   }
 }
 
-function downloadAndExtract() {
-  const zipPath = path.join(__dirname, 'update.zip');
-  const extractPath = path.join(__dirname, 'update-temp');
+function downloadAndUpdate() {
+  const zipPath = 'update.zip';
+  const tempDir = 'update-temp';
 
-  console.log('ℹ️ 正在下載更新包...');
-  execSync(`curl -L ${EXHO_URL} -o ${zipPath}`, { stdio: 'ignore' });
+  console.log('下載更新包...');
+  execSync(`curl -L ${ZIP_URL} -o ${zipPath}`);
 
-  console.log('ℹ️ 解壓中...');
-  fs.removeSync(extractPath);
-  execSync(`unzip -q ${zipPath} -d ${extractPath}`);
+  console.log('解壓中...');
+  fs.removeSync(tempDir);
+  execSync(`unzip -q ${zipPath} -d ${tempDir}`);
   fs.removeSync(zipPath);
 
-  const extractedDir = fs.readdirSync(extractPath)[0];
-  const source = path.join(extractPath, extractedDir);
+  const extracted = fs.readdirSync(tempDir)[0];
+  const source = path.join(tempDir, extracted);
 
-  // 同步檔案（排除忽略項）
-  fs.readdirSync(source).forEach(file => {
-    const src = path.join(source, file);
-    const dest = path.join(__dirname, file);
+  // 只更新有變動的檔案
+  let updated = 0;
+  fs.readdirSync(source).forEach(item => {
+    const src = path.join(source, item);
+    const dest = path.join(__dirname, item);
 
-    if (IGNORE.includes(file) || IGNORE.includes(`./${file}`)) {
-      console.log(`跳過: ${file}`);
+    if (PROTECTED.includes(item) || PROTECTED.includes(`data/${item}`)) {
+      console.log(`保護: ${item}`);
       return;
     }
 
-    if (fs.statSync(src).isDirectory()) {
-      fs.copySync(src, dest, { overwrite: true });
-    } else {
-      fs.copySync(src, dest);
+    if (fs.existsSync(dest)) {
+      const srcStat = fs.statSync(src);
+      const destStat = fs.statSync(dest);
+      if (srcStat.mtimeMs <= destStat.mtimeMs && srcStat.size === destStat.size) {
+        console.log(`無變動: ${item}`);
+        return;
+      }
     }
-    console.log(`更新: ${file}`);
+
+    fs.copySync(src, dest, { overwrite: true });
+    console.log(`更新: ${item}`);
+    updated++;
   });
 
-  fs.removeSync(extractPath);
+  fs.removeSync(tempDir);
+  return updated;
 }
 
 async function main() {
-  console.log('檢查更新中...');
+  console.log('檢查更新...\n');
   const latest = await getLatestVersion();
 
-  if (!latest || latest <= CURRENT_VERSION) {
+  if (!latest) {
+    console.log('無法連線到 GitHub，稍後再試');
+    process.exit(0);
+  }
+
+  if (fs.existsSync('bot.js') && latest <= CURRENT_VERSION) {
     console.log('已是最新版本！');
     process.exit(0);
   }
 
-  console.log(`\n⚠️ 你的 ExhoBOT 有新版本！`);
-  console.log(`   目前版本：${CURRENT_VERSION}`);
-  console.log(`   最新版本：${latest}`);
-  console.log(`   執行 node update.js 來執行更新！（請先備份好資料在執行指令）\n`);
+  console.log(`有新版本可用！`);
+  console.log(`目前：${CURRENT_VERSION}`);
+  console.log(`最新：${latest || '未知'}`);
+  console.log(`執行更新將下載最新檔案（不影響 .env 和使用者資料）`);
+  console.log(`請在執行更新前將重要資料備份完畢（例：.env, ./data, ./data/user, dailyQuote.txt）\n`);
 
-  rl.question('輸入 "confirm" 或 "繼續" 開始更新，輸入 "cancel" 或 "取消" 取消：', async (answer) => {
-    const confirm = answer.trim().toLowerCase();
-    if (!['confirm', '繼續'].includes(confirm)) {
-      console.log('已取消更新。');
+  rl.question('輸入 "繼續" 開始更新，輸入 "取消" 離開：', async (ans) => {
+    if (!['繼續', 'confirm', 'yes'].includes(ans.trim())) {
+      console.log('已取消');
       rl.close();
       return;
     }
 
-    console.log('\nℹ️ 安裝中... 需等待幾分鐘的時間...\n');
+    console.log('\n更新中... 請耐心等待...\n');
 
     try {
-      downloadAndExtract();
-
-      // 強制清空 data 內非 user 的內容
-      const dataDir = path.join(__dirname, 'data');
-      if (fs.existsSync(dataDir)) {
-        fs.readdirSync(dataDir).forEach(item => {
-          if (item !== 'user') {
-            fs.removeSync(path.join(dataDir, item));
-          }
-        });
-      }
-
-      console.log('\n✅ 已完成更新！請重啟機器人以套用更新！\n');
-
-      console.log('⚠️備註：由於更新腳本為測試版本，所以請確認檔案已完全同步！');
-      console.log('若發生問題請恢復備份檔，若未先保存備份檔造成資料丟失，更新腳本怒不負責，還請見諒！');
-      console.log('請確認 .env 和 ./data/ 和 ./data/user 檔案及資料未被覆蓋！\n');
-
-      console.log('⚠️Note: This update script is a test version, so please ensure all files are fully synchronized!');
-      console.log('If any problems occur, please restore from your backup.');
-      console.log('The update script is not responsible for data loss due to failure to save a backup first. We apologize for any inconvenience.');
-      console.log('Please ensure that the .env, ./data/, and ./data/user files and data have not been overwritten!\n');
-
+      const count = downloadAndUpdate();
+      console.log(`\n更新完成！共更新 ${count} 個檔案`);
+      console.log('已保護：.env、data/user、dailyQuote.txt');
+      console.log('請重啟機器人以套用更新！');
     } catch (err) {
       console.error('更新失敗：', err.message);
     }

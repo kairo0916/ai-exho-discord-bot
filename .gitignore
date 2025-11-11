@@ -1,10 +1,12 @@
 .env
 node_modules/
-data/user/*
-!data/user/
-data/*.json
-*.log
+
 update.zip
 update-temp/
+
+data/user/*
+
+!data/user/
+!data/user/.gitkeep
+
 upload.js
-.git

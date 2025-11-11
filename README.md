@@ -1,8 +1,8 @@
-# Exho BOT 智慧LLM AI機器人
+# Exho BOT LLM AI機器人
 
 <p align="center">
   <a href="https://discord.gg/umKvqHj4DC">
-    <img src="https://img.shields.io/discord/1212823415204085770?color=7289DA&label=Support&logo=discord&style=for-the-badge" alt="Discord">
+    <img src="https://img.shields.io/discord/1212823415204085770?color=7289DA&label=支援群&logo=discord&style=for-the-badge" alt="Discord">
   </a>
 </p>
 
@@ -28,6 +28,7 @@
 
 ## 🛠 安裝與部署
 ```bash
+# 一行一行複製
 # 克隆倉庫
 git clone https://github.com/kairo0916/ai-exho-discord-bot.git
 cd exho-bot
@@ -45,7 +46,7 @@ node bot.js
 
 ### 步驟 1：設定 `.env` 檔案
 
-將 `.env Example` 檔案重新命名為 `.env` 並填入所需的值。
+將 `.env.Example` 檔案重新命名為 `.env` 並填入所需的值。
 
 ```env
 # .env
@@ -116,12 +117,21 @@ node bot.js
 
 ---
 
+### 🧠 智慧大腦
+* **描述：使用 Cohere AI 進行對話，支援上下文、長期記憶、自然對話..等功能。**
+
+---
+
 ### 👤 記憶系統
-• **描述：長期保存使用者與機器人的對話，優化上下文功能。**
+* **描述：長期保存使用者與機器人的對話，優化上下文功能。**
 
 ---
 
 ### 🖼️ 圖片檢視
-• **描述：使用 Gemini 2.0 Flash 模型查看圖片（若使用此功能請填寫 GEMINI_API_KEY。**
+* **描述：使用 Gemini 2.0 Flash 模型查看圖片（若使用此功能請填寫 GEMINI_API_KEY）（可至 .env 修改模型 VISION_MODEL 欄位）。**
 
-## 目前功能尚未完善，還請各位踴躍投稿或回報👍
+## 目前功能少，還請各位踴躍投稿或回報👍
+
+---
+
+### 此專案由 MIT 保護

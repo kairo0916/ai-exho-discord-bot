@@ -21,6 +21,7 @@
 // SOFTWARE.
 
 
+require('./github_update.js');
 const startTime = process.hrtime.bigint();
 require('dotenv').config();
 const fs = require('fs-extra');
@@ -44,7 +45,6 @@ const { checkBanned } = require('./modules/GlobalBlacklist.js');
 const banModule = require('./modules/GlobalBlacklist.js');
 const statusCommand = require('./commands/slash/status.js');
 const { CohereClient } = require('cohere-ai');
-require('./github_update.js');
 
 const cohere = new CohereClient({
   token: process.env.COHERE_API_KEY,
