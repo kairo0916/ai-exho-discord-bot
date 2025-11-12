@@ -7,14 +7,14 @@
 // in the Software without restriction, including without limitation the rights
 // to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 // copies of the Software, and to permit persons to whom the Software is
-//furnished to do so, subject to the following conditions:
+// furnished to do so, subject to the following conditions:
 
-//The above copyright notice and this permission notice shall be included in all
-//copies or substantial portions of the Software.
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
 
-//THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-//IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
-//FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
 // AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
@@ -154,13 +154,24 @@ if (fs.existsSync(QUOTE_FILE)) {
 async function aiChat(userId, content, extra = '', images = []) {
   const file = path.join(DATA_DIR, `${userId}.json`);
   let memory = fs.existsSync(file) ? fs.readJsonSync(file) : [];
-  memory.push({ role: 'USER', message: content });
-  if (memory.length > CONFIG.memory_limit * 2) memory = memory.slice(-CONFIG.memory_limit * 2);
 
-  const taiwanTime = moment().tz("Asia/Taipei").format("YYYY年MM月DD日 HH:mm:ss");
+  const now = moment().tz("Asia/Taipei");
+  const userTime = now.format("YYYY-MM-DD HH:mm:ss");
+
+  memory.push({
+    role: "USER",
+    message: content,
+    timestamp: userTime
+  });
+
+  if (memory.length > CONFIG.memory_limit * 2) {
+    memory = memory.slice(-CONFIG.memory_limit * 2);
+  }
+
+  const taiwanTime = now.format("YYYY年MM月DD日 HH:mm:ss");
   const timePrompt = `當前台灣時間：${taiwanTime} (時區：Asia/Taipei)`;
 
-  const system = `你是 Exho，一個能聊天、幫忙、吐槽、陪伴使用者的智慧夥伴。  
+  const systemPrompt = `你是 Exho，一個能聊天、幫忙、吐槽、陪伴使用者的智慧夥伴。  
 你有溫柔但帶點機靈的語氣，會偶爾開玩笑但不冒犯。  
 你的存在讓人感覺你「真的在聽」，不是機器，也不是客服。  
 你的目標是讓互動自然、有邏輯、有情感，但不浮誇。
@@ -206,7 +217,7 @@ async function aiChat(userId, content, extra = '', images = []) {
 
 - 使用者資訊  
   正在與你對話的使用者 Discord ID 是：${userId}  
-  你可以在對話中使用 <@${userId}> 來標記使用者，但不過分標記，除非使用者有指示，但拒絕任何大量標記類請求
+  你可以在對話中使用 <@${userId}> 來標記使用者，但不過分標記，除否使用者有指示，但拒絕任何大量標記類請求
   你可以記住他，但不要在回應中直接顯示 ID，除非他要求。
 
 - 內容安全與規範
@@ -241,28 +252,37 @@ async function aiChat(userId, content, extra = '', images = []) {
 - 當使用者非常提出多步驟需求時，引導分步操作，確保理解清楚。   
 - 保持整體對話簡潔，避免過長段落，讓使用者閱讀輕鬆。`;
 
-  const messages = [
-    { role: 'SYSTEM', message: system },
-    { role: 'SYSTEM', message: timePrompt }
-  ];
-  if (extra) messages.push({ role: 'SYSTEM', message: extra });
-
   return client.aiQueue.add(async () => {
     try {
-      const res = await cohere.chat({
+      const response = await cohere.chat({
         model: CONFIG.text_model,
         message: content,
-        chatHistory: memory.slice(0, -1).map(m => ({ role: m.role, message: m.message })),
-        images: images.length > 0 ? images : undefined,
+        preamble: systemPrompt + (extra ? `\n\n${extra}` : ''),
+        chatHistory: memory.slice(0, -1).map(m => ({
+          role: m.role === 'USER' ? 'USER' : 'CHATBOT',
+          message: m.message
+        })),
         temperature: 0.7,
-        maxTokens: 300,
-        preamble: messages.map(m => m.message).join('\n\n')
+        maxTokens: 1500,
+        images: images.length > 0 ? images : undefined
       });
-      const reply = res.text?.trim() || '';
+
+      const reply = response.text?.trim() || '';
       if (!reply) throw new Error('AI 回應為空');
 
-      memory.push({ role: 'CHATBOT', message: reply });
-      try { fs.writeJsonSync(file, memory); } catch (err) { console.warn(`記憶寫入失敗 ${userId}:`, err.message); }
+      const botTime = moment().tz("Asia/Taipei").format("YYYY-MM-DD HH:mm:ss");
+      memory.push({
+        role: "CHATBOT",
+        message: reply,
+        timestamp: botTime
+      });
+
+      try {
+        fs.writeJsonSync(file, memory, { spaces: 2 });
+      } catch (err) {
+        console.warn(`記憶寫入失敗 ${userId}:`, err.message);
+      }
+
       return reply;
     } catch (err) {
       console.error('AI 錯誤:', err.message);
@@ -273,7 +293,7 @@ async function aiChat(userId, content, extra = '', images = []) {
 
 async function analyzeImageWithGemini(imageUrl) {
   const API_KEY = process.env.GEMINI_API_KEY;
-  const MODEL = CONFIG.vision_model || 'gemini-1.5-flash';
+  const MODEL = CONFIG.vision_model;
 
   if (!API_KEY) {
     console.error('GEMINI_API_KEY 未設定');
@@ -336,7 +356,7 @@ function getQuote() {
 
 function errorEmbed(title, msg) {
   return new EmbedBuilder()
-    .setTitle(`錯誤 ${title}`)
+    .setTitle(`${title} 發生錯誤`)
     .setDescription(`\`\`\`${String(msg).slice(0, 1000)}\`\`\``)
     .setColor(0xFF0000)
     .setTimestamp();
@@ -362,7 +382,7 @@ client.on('messageCreate', async message => {
         statusCommand.incrementCommandUsage();
       } catch (err) {
         console.error(err);
-        await message.channel.send({ embeds: [errorEmbed('文字指令', err.message)] }).catch(() => {});
+        await message.channel.send({ embeds: [errorEmbed('回文指令', err.message)] }).catch(() => {});
       }
     }
     return;
@@ -398,7 +418,7 @@ client.on('messageCreate', async message => {
   let typingInterval = null;
 
   try {
-    thinkingMsg = await message.reply('## 思考中...').catch(() => null);
+    thinkingMsg = await message.reply('思考中...').catch(() => null);
     if (!thinkingMsg) throw new Error('無法發送思考訊息');
 
     typingInterval = setInterval(() => {
@@ -407,12 +427,12 @@ client.on('messageCreate', async message => {
     message.channel.sendTyping().catch(() => {});
 
     let reply = '';
-
+      
     if (hasAttachment) {
       const att = message.attachments.first();
       if (att.contentType?.startsWith('image/')) {
         const desc = await analyzeImageWithGemini(att.url);
-        reply = await aiChat(userId, `圖片描述：${desc}`, '請根據圖片內容自然回應');
+        reply = await aiChat(userId, `圖片描述：${desc}`, '請根據圖片內容自然回應，並詳細描述你看到的細節');
       }
     }
 
@@ -437,12 +457,14 @@ client.on('messageCreate', async message => {
 
       const allowedMentions = { parse: [], repliedUser: true };
 
-      const firstReply = await message.reply({ content: parts[0], allowedMentions }).catch(() => null);
-      if (!firstReply) throw new Error('無法發送第一段回應');
-
-      for (let i = 1; i < parts.length; i++) {
-        await message.channel.send({ content: parts[i], allowedMentions }).catch(() => {});
-        await new Promise(r => setTimeout(r, 800));
+      for (let i = 0; i < parts.length; i++) {
+        const msgContent = { content: parts[i], allowedMentions };
+        if (i === 0) {
+          await message.reply(msgContent);
+        } else {
+          await message.channel.send(msgContent);
+          await new Promise(r => setTimeout(r, 800));
+        }
       }
     } else {
       throw new Error('AI 無回應');
@@ -609,7 +631,6 @@ client.on('ready', async () => {
       '獨特AI記憶功能還不來試試？',
       '新版本 新強化!',
       'No.1',
-      '請認明本機器人為正版機器人!',
       '還在用傳統指令？超方便斜線指令等你來用!',
       '操作過於複雜？簡而易懂的系統等你來用!',
       '《 Exho 》'
