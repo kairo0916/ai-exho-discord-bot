@@ -1,15 +1,4 @@
 .env
 node_modules/
-
-update.zip
-update-temp/
-
 data/user/*
-
-!data/user/
 !data/user/.gitkeep
-
-upload.js
-
-.npm
-.cache

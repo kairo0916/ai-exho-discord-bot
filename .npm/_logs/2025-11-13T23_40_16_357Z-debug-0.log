@@ -1,0 +1,48 @@
+0 verbose cli /usr/local/bin/node /usr/local/bin/npm
+1 info using npm@11.6.2
+2 info using node@v20.19.5
+3 silly config load:file:/usr/local/lib/node_modules/npm/npmrc
+4 silly config load:file:/home/container/.npmrc
+5 silly config load:file:/usr/local/etc/npmrc
+6 verbose title npm install
+7 verbose argv "install"
+8 verbose logfile logs-max:10 dir:/home/container/.npm/_logs/2025-11-13T23_40_16_357Z-
+9 verbose logfile /home/container/.npm/_logs/2025-11-13T23_40_16_357Z-debug-0.log
+10 silly logfile start cleaning logs, removing 1 files
+11 silly logfile done cleaning log files
+12 silly packumentCache heap:2197815296 maxSize:549453824 maxEntrySize:274726912
+13 silly idealTree buildDeps
+14 silly fetch manifest @github/cli@^1.0.0
+15 silly packumentCache full:https://registry.npmjs.org/@github%2fcli cache-miss
+16 http fetch GET https://registry.npmjs.org/@github%2fcli attempt 1 failed with ECONNRESET
+17 http fetch GET 404 https://registry.npmjs.org/@github%2fcli 10572ms attempt #2 (cache skip)
+18 silly placeDep ROOT @github/cli@ OK for: ai-exho-discord-bot@1.0.1 want: ^1.0.0
+19 verbose stack HttpErrorGeneral: 404 Not Found - GET https://registry.npmjs.org/@github%2fcli - Not found
+19 verbose stack     at /usr/local/lib/node_modules/npm/node_modules/npm-registry-fetch/lib/check-response.js:103:15
+19 verbose stack     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+19 verbose stack     at async RegistryFetcher.packument (/usr/local/lib/node_modules/npm/node_modules/pacote/lib/registry.js:90:19)
+19 verbose stack     at async RegistryFetcher.manifest (/usr/local/lib/node_modules/npm/node_modules/pacote/lib/registry.js:128:23)
+19 verbose stack     at async #fetchManifest (/usr/local/lib/node_modules/npm/node_modules/@npmcli/arborist/lib/arborist/build-ideal-tree.js:1227:20)
+19 verbose stack     at async #nodeFromEdge (/usr/local/lib/node_modules/npm/node_modules/@npmcli/arborist/lib/arborist/build-ideal-tree.js:1065:19)
+19 verbose stack     at async #buildDepStep (/usr/local/lib/node_modules/npm/node_modules/@npmcli/arborist/lib/arborist/build-ideal-tree.js:929:11)
+19 verbose stack     at async Arborist.buildIdealTree (/usr/local/lib/node_modules/npm/node_modules/@npmcli/arborist/lib/arborist/build-ideal-tree.js:182:7)
+19 verbose stack     at async Promise.all (index 1)
+19 verbose stack     at async Arborist.reify (/usr/local/lib/node_modules/npm/node_modules/@npmcli/arborist/lib/arborist/reify.js:114:5)
+20 verbose statusCode 404
+21 verbose pkgid @github/cli@^1.0.0
+22 error code E404
+23 error 404 Not Found - GET https://registry.npmjs.org/@github%2fcli - Not found
+24 error 404
+25 error 404  The requested resource '@github/cli@^1.0.0' could not be found or you do not have permission to access it.
+26 error 404
+27 error 404 Note that you can also install from a
+28 error 404 tarball, folder, http url, or git url.
+29 silly unfinished npm timer reify 1763077217101
+30 silly unfinished npm timer reify:loadTrees 1763077217101
+31 verbose cwd /home/container
+32 verbose os Linux 5.15.0-134-generic
+33 verbose node v20.19.5
+34 verbose npm  v11.6.2
+35 verbose exit 1
+36 verbose code 1
+37 error A complete log of this run can be found in: /home/container/.npm/_logs/2025-11-13T23_40_16_357Z-debug-0.log
