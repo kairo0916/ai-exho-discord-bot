@@ -39,182 +39,68 @@ function incrementCommandUsage() {
   fs.writeFileSync(COMMAND_USAGE_FILE, commandUsageCount.toString());
 }
 
-let redisClient = null;
-let redisConnectionStatus = 'disabled';
-
-async function initRedisConnection() {
-  if (!REDIS_HOST || !REDIS_PORT || !REDIS_PASS) {
-    redisConnectionStatus = 'disabled';
-    return false;
-  }
-
-  let createClient;
-  try {
-    createClient = require('redis').createClient;
-  } catch {
-    console.warn('Redis 模組未安裝');
-    redisConnectionStatus = 'disabled';
-    return false;
-  }
-
-  try {
-    redisClient = createClient({
-      username: 'default',
-      password: REDIS_PASS,
-      socket: { host: REDIS_HOST, port: Number(REDIS_PORT), connectTimeout: 5000 }
-    });
-
-    redisClient.on('error', () => { redisConnectionStatus = 'error'; });
-    redisClient.on('ready', () => { redisConnectionStatus = 'connected'; });
-    redisClient.on('end', () => { redisConnectionStatus = 'error'; });
-
-    await redisClient.connect();
-    await redisClient.ping();
-    console.log('Redis 連接成功');
-    return true;
-  } catch (error) {
-    console.error('Redis 初始化失敗:', error.message);
-    redisConnectionStatus = 'error';
-    return false;
-  }
-}
-
-async function checkRedisConnection() {
-  if (!redisClient) return 'disabled';
-  try {
-    if (!redisClient.isReady) return 'error';
-    await redisClient.ping();
-    return 'connected';
-  } catch {
-    return 'error';
-  }
-}
-
-let mariadbPool = null;
 let poolStats = {
   max: DB_POOL_MAX ? Number(DB_POOL_MAX) : 20,
-  active: 0, idle: 0, total: 0, available: DB_POOL_MAX ? Number(DB_POOL_MAX) : 20
+  active: 0,
+  idle: 0,
+  total: 0,
+  available: DB_POOL_MAX ? Number(DB_POOL_MAX) : 20
 };
-let poolUpdaterHandle = null;
-
-async function initMariadbPoolIfConfigured() {
-  if (!DB_HOST || !DB_USER || !DB_PASS || !DB_NAME) return false;
-  if (mariadbPool) return true;
-
-  let mariadb;
-  try { mariadb = require('mariadb'); } catch { console.warn('mariadb 未安裝'); return false; }
-
-  try {
-    mariadbPool = mariadb.createPool({
-      host: DB_HOST,
-      user: DB_USER,
-      password: DB_PASS,
-      database: DB_NAME,
-      port: Number(DB_PORT),
-      connectionLimit: Number(DB_POOL_MAX) || 20
-    });
-
-    poolStats.max = mariadbPool.config.connectionLimit;
-    poolStats.available = poolStats.max;
-
-    poolUpdaterHandle = setInterval(async () => {
-      if (!mariadbPool) return;
-      try {
-        const conn = await mariadbPool.getConnection();
-        poolStats.total = mariadbPool.totalConnections();
-        poolStats.idle = mariadbPool.idleConnections();
-        poolStats.active = poolStats.total - poolStats.idle;
-        poolStats.available = Math.max(0, poolStats.max - poolStats.total);
-        conn.release();
-      } catch {
-        poolStats.active = poolStats.idle = poolStats.total = 0;
-        poolStats.available = poolStats.max;
-      }
-    }, 5000);
-
-    console.log('MariaDB pool 已建立');
-    return true;
-  } catch (err) {
-    console.error('MariaDB pool 失敗:', err.message);
-    mariadbPool = null;
-    if (poolUpdaterHandle) clearInterval(poolUpdaterHandle);
-    return false;
-  }
-}
-
-async function checkDatabaseConnection() {
-  if (!DB_HOST) return false;
-  await initMariadbPoolIfConfigured();
-  if (!mariadbPool) return false;
-  try {
-    const conn = await mariadbPool.getConnection();
-    await conn.query('SELECT 1');
-    conn.release();
-    return true;
-  } catch {
-    return false;
-  }
-}
 
 function getConnectionPoolStatus() {
-  return mariadbPool ? {
-    max: poolStats.max,
-    active: poolStats.active,
-    idle: poolStats.idle,
-    total: poolStats.total,
-    available: poolStats.available
-  } : { max: poolStats.max, active: 0, idle: 0, total: 0, available: poolStats.max };
-}
-
-async function getServerResources() {
-  if (!PTERO_API_KEY || !SERVER_ID) {
-    console.warn('Pterodactyl 環境變數未配置: PTERO_API_KEY 或 SERVER_ID 缺失');
-    return { status: 'unconfigured', message: 'Pterodactyl API 未配置' };
-  }
-
-  try {
-    const [usageRes, detailsRes] = await Promise.all([
-      axios.get(`${PTERO_URL}${SERVER_ID}/resources`, {
-        headers: { Authorization: `Bearer ${PTERO_API_KEY}` },
-        timeout: 4000
-      }),
-      axios.get(`${PTERO_URL}${SERVER_ID}`, {
-        headers: { Authorization: `Bearer ${PTERO_API_KEY}` },
-        timeout: 4000
-      })
-    ]);
-
-    const usage = usageRes.data?.attributes ?? {};
-    const details = detailsRes.data?.attributes ?? {};
-
-    const cpu = usage.current_state?.cpu_absolute ?? usage.cpu_absolute ?? 0;
-    const memBytes = usage.current_state?.memory_bytes ?? usage.memory_bytes ?? 0;
-    const diskBytes = usage.current_state?.disk_bytes ?? usage.disk_bytes ?? 0;
-    const cpuLimit = details.limits?.cpu ?? 100;
-    const memLimit = (details.limits?.memory ?? 0) > 1024 * 1024
-      ? (details.limits.memory / 1024 / 1024).toFixed(1)
-      : (details.limits.memory || 0).toFixed(1);
-    const diskLimit = (details.limits?.disk ?? 0) > 1024 * 1024
-      ? (details.limits.disk / 1024 / 1024).toFixed(1)
-      : (details.limits.disk || 0).toFixed(1);
-
-    return {
-      status: 'success',
-      cpu: Number(cpu.toFixed(2)),
-      cpuLimit: Number(cpuLimit),
-      memoryUsed: Number((memBytes / 1024 / 1024).toFixed(1)),
-      memoryLimit: Number(memLimit),
-      diskUsed: Number((diskBytes / 1024 / 1024).toFixed(1)),
-      diskLimit: Number(diskLimit)
-    };
-  } catch (err) {
-    console.error('Pterodactyl API 請求失敗:', err.message);
-    return { status: 'error', message: `無法連線到 Pterodactyl: ${err.message}` };
-  }
+  return { max: poolStats.max, active: 0, idle: 0, total: 0, available: poolStats.max };
 }
 
 let botOnlineTime = null;
 const activeCollectors = new Map();
+
+function getJsonCount(filePath, type) {
+  try {
+    if (!fs.existsSync(filePath)) return 0;
+    const raw = fs.readFileSync(filePath, 'utf8');
+
+    if (type === 'array') {
+      const arr = JSON.parse(raw);
+      return Array.isArray(arr) ? arr.length : 0;
+    }
+
+    if (type === 'object') {
+      const obj = JSON.parse(raw);
+      return obj && typeof obj === 'object' ? Object.keys(obj).length : 0;
+    }
+
+    return 0;
+  } catch {
+    return 0;
+  }
+}
+
+function getUserMemoryCount(dirPath) {
+  try {
+    if (!fs.existsSync(dirPath)) return 0;
+
+    const files = fs.readdirSync(dirPath);
+    return files.filter(f => f.endsWith('.json')).length;
+  } catch {
+    return 0;
+  }
+}
+
+async function getDatabaseStats() {
+  const banlistPath = path.join(__dirname, '../../data/banlist.json');
+  const marriagePath = path.join(__dirname, '../../data/marriage.json');
+  const userDir = path.join(__dirname, '../../data/user');
+
+  const banlistCount = getJsonCount(banlistPath, 'array');
+  const marriageCount = getJsonCount(marriagePath, 'object');
+  const userMemoryCount = getUserMemoryCount(userDir);
+
+  return {
+    banlist: banlistCount,
+    marriage: marriageCount,
+    userMemory: userMemoryCount
+  };
+}
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -246,6 +132,9 @@ module.exports = {
         .map(m => `• ${m}`);
     }
 
+    const dbStats = await getDatabaseStats();
+    const poolInfo = getConnectionPoolStatus();
+
     const embed = new EmbedBuilder()
       .setTitle('機器人當前狀態')
       .setColor('#53e64c')
@@ -265,13 +154,25 @@ module.exports = {
         {
           name: '🖥️ 系統資訊',
           value: '```\n' +
-            `Node.js 版本: ${nodejsversion}\n` +
-            `Discord.js 版本: ${djsVersion}\n` +
+            `Node.js 版本：${nodejsversion}\n` +
+            `Discord.js 版本：${djsVersion}\n` +
             `延遲：${ping}ms\n` +
             `上線時長：${uptimeStr}\n` +
             '```',
           inline: false
         },
+
+        {
+          name: '🗄️ 資料庫數據',
+          value:
+            '```\n' +
+            `• 黑名單用戶: ${dbStats.banlist} 筆\n` +
+            `• 使用者記憶: ${dbStats.userMemory} 筆\n` +
+            `• 婚姻數據: ${dbStats.marriage} 筆\n` +
+            '```',
+          inline: false
+        },
+
         {
           name: '🔧 工具模組',
           value: modules.length > 0
@@ -284,17 +185,17 @@ module.exports = {
           value: '```\n' +
             `開發者：Kairo\n` +
             `版本：${BOT_VERSION || '未知'}\n` +
+            `專案名稱: ai-exho-discord-bot\n` +
             '```',
           inline: false
         }
       )
-      .setFooter({ 
-        text: 'Exho', 
-        iconURL: client.user.displayAvatarURL({ size: 64 }) 
+      .setFooter({
+        text: 'Exho',
+        iconURL: client.user.displayAvatarURL({ size: 64 })
       })
       .setTimestamp();
 
-    // === Components V2 寫法 ===
     const row1 = new ActionRowBuilder().addComponents(
       new ButtonBuilder()
         .setCustomId('refresh_status')
@@ -313,15 +214,14 @@ module.exports = {
         .setURL('https://discord.gg/umKvqHj4DC')
     );
 
-    const message = await interaction.editReply({ 
-      embeds: [embed], 
-      components: [row1, row2], 
-      fetchReply: true 
+    const message = await interaction.editReply({
+      embeds: [embed],
+      components: [row1, row2],
+      fetchReply: true
     }).catch(() => {});
 
     if (!message) return;
 
-    // === 儲存訊息 ID ===
     const statusLog = {
       channelId: interaction.channel.id,
       messageId: message.id,
@@ -351,10 +251,8 @@ module.exports = {
     });
   },
 
-  initRedis: initRedisConnection,
   incrementCommandUsage,
 
-  // 恢復按鈕（重啟用）
   restoreCollector: (client, channelId, messageId) => {
     const channel = client.channels.cache.get(channelId);
     if (!channel) return;
@@ -381,7 +279,6 @@ module.exports = {
   }
 };
 
-// === Components V2 版本的 createEmbed ===
 async function createEmbed(client) {
   const ping = client.ws.ping;
   const uptimeSec = Math.floor(process.uptime());
@@ -400,6 +297,9 @@ async function createEmbed(client) {
       .map(f => f.replace('.js', ''))
       .map(m => `• ${m}`);
   }
+
+  const dbStats = await getDatabaseStats();
+  const poolInfo = getConnectionPoolStatus();
 
   return new EmbedBuilder()
     .setTitle('機器人當前狀態')
@@ -427,6 +327,18 @@ async function createEmbed(client) {
           '```',
         inline: false
       },
+
+      {
+        name: '🗄️ 資料庫數據',
+        value:
+          '```\n' +
+          `• 黑名單用戶: ${dbStats.banlist} 筆\n` +
+          `• 使用者記憶: ${dbStats.userMemory} 筆\n` +
+          `• 婚姻數據: ${dbStats.marriage} 筆\n` +
+          '```',
+        inline: false
+      },
+
       {
         name: '🔧 工具模組',
         value: modules.length > 0
@@ -444,9 +356,9 @@ async function createEmbed(client) {
         inline: false
       }
     )
-    .setFooter({ 
-      text: 'Exho', 
-      iconURL: client.user.displayAvatarURL({ size: 64 }) 
+    .setFooter({
+      text: 'Exho',
+      iconURL: client.user.displayAvatarURL({ size: 64 })
     })
     .setTimestamp();
 }
