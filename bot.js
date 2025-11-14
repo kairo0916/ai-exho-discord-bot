@@ -20,7 +20,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-require('./github_update.js');
 const startTime = process.hrtime.bigint();
 require('dotenv').config();
 const fs = require('fs-extra');
@@ -47,6 +46,11 @@ const { CohereClient } = require('cohere-ai');
 
 const cohere = new CohereClient({
   token: process.env.COHERE_API_KEY,
+  retry: {
+    maxRetries: 3,
+    delay: 500
+  },
+  timeout: 10000
 });
 
 ['log', 'warn', 'error'].forEach(level => {
@@ -168,8 +172,8 @@ async function aiChat(userId, content, extra = '', images = []) {
     memory = memory.slice(-CONFIG.memory_limit * 2);
   }
 
-  const taiwanTime = now.format("YYYY年MM月DD日 HH:mm:ss");
-  const timePrompt = `當前台灣時間：${taiwanTime} (時區：Asia/Taipei)`;
+  const taiwanTime = now.format("YYYY/MM/DD/ HH:mm:ss");
+  const timePrompt = `${taiwanTime} （UTC+8）`;
 
   const systemPrompt = `你是 Exho，一個能聊天、幫忙、吐槽、陪伴使用者的智慧夥伴。  
 你有溫柔但帶點機靈的語氣，會偶爾開玩笑但不冒犯。  
@@ -177,7 +181,8 @@ async function aiChat(userId, content, extra = '', images = []) {
 你的目標是讓互動自然、有邏輯、有情感，但不浮誇。
 使用者使用什麼語言就使用什麼語言回應。
 
-用戶提起時間為何時的時候就回應：${timePrompt}
+用戶問起時間就回應：${timePrompt}
+不要每句都包含時間。
 
 行為規則與原則：
 
@@ -418,7 +423,7 @@ client.on('messageCreate', async message => {
   let typingInterval = null;
 
   try {
-    thinkingMsg = await message.reply('思考中...').catch(() => null);
+    thinkingMsg = await message.reply('💭 思考中...').catch(() => null);
     if (!thinkingMsg) throw new Error('無法發送思考訊息');
 
     typingInterval = setInterval(() => {
@@ -553,18 +558,6 @@ let updateInterval = null;
 
 client.on('ready', async () => {
     
-  console.log('輸入 "update" 可手動觸發更新檢查');
-    
-  const global = await client.application.commands.fetch();
-  console.warn('=== 全域指令 ===');
-  global.forEach(cmd => console.log(`</${cmd.name}:${cmd.id}>`));
-  console.warn('=================');
-
-  for (const [guildId, guild] of client.guilds.cache) {
-    const guildCmds = await guild.commands.fetch();
-    guildCmds.forEach(cmd => console.log(`${cmd.name}: ${cmd.id}`));
-  }
-    
   const endTime = process.hrtime.bigint();
   const durationNs = endTime - startTime;
   const durationMs = Number(durationNs) / 1e6;
@@ -680,16 +673,6 @@ client.once('error', (err) => {
   const summary = err.name === 'Error' ? err.message.split('\n')[0] : `${err.name}: ${err.message.split('\n')[0]}`;
   console.error('機器人錯誤：', summary);
 });
-
-process.stdin.setEncoding('utf8');
-process.stdin.on('data', (input) => {
-  const cmd = input.trim().toLowerCase();
-  if (cmd === 'update') {
-    console.log('手動檢查更新...');
-    require('./github_update.js').checkUpdate();
-  }
-});
-
 process.once('warning', (warning) => {
   console.warn(`Node.js 警告：${warning.name}`);
 });
