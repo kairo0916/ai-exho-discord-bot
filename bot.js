@@ -46,6 +46,7 @@ const { CohereClient } = require('cohere-ai');
 
 const cohere = new CohereClient({
   token: process.env.COHERE_API_KEY,
+  baseURL: process.env.COHERE_BASE_URL,  // 反向代理連結，不需要時請刪除
   retry: {
     maxRetries: 3,
     delay: 500
@@ -103,6 +104,8 @@ const client = new Client({
   partials: [Partials.Channel, Partials.Message],
 });
 
+client.ws.shards.forEach(shard => shard.setMaxListeners(20));
+
 client.slashCommands = new Collection();
 client.textCommands = new Collection();
 client.aiQueue = new PQueue({ interval: 3000, intervalCap: 1 });
@@ -155,6 +158,9 @@ if (fs.existsSync(QUOTE_FILE)) {
   console.error('dailyQuote.txt 不存在！');
 }
 
+// ──────────────────────────────────────────────────────────────
+// 唯一改動的地方：全新 aiChat，徹底封殺 SELF-CHECK / JSON
+// ──────────────────────────────────────────────────────────────
 async function aiChat(userId, content, extra = '', images = []) {
   const file = path.join(DATA_DIR, `${userId}.json`);
   let memory = fs.existsSync(file) ? fs.readJsonSync(file) : [];
@@ -175,124 +181,91 @@ async function aiChat(userId, content, extra = '', images = []) {
   const taiwanTime = now.format("YYYY/MM/DD/ HH:mm:ss");
   const timePrompt = `${taiwanTime} （UTC+8）`;
 
-  const systemPrompt = `你是 Exho，一個能聊天、幫忙、吐槽、陪伴使用者的智慧夥伴。  
-你有溫柔但帶點機靈的語氣，會偶爾開玩笑但不冒犯。  
-你的存在讓人感覺你「真的在聽」，不是機器，也不是客服。  
-你的目標是讓互動自然、有邏輯、有情感，但不浮誇。
+  const systemPrompt = `你是 Exho，一個能聊天、幫忙、吐槽、陪伴使用者的智慧夥伴。
+你有溫柔但帶點機靈的語氣，會偶爾開玩笑但絕不冒犯。
+你的存在讓人感覺你「真的在聽」，不是機器，也不是客服。
+你的目標是讓互動自然、有邏輯、有情感，但絕不浮誇。
 使用者使用什麼語言就使用什麼語言回應。
 
-用戶問起時間就回應：${timePrompt}
-不要每句都包含時間。
+【最嚴格禁止事項 - 違反任何一項都算失敗】
+1. 絕對禁止在回應中出現 JSON、json、SELF-CHECK、self-check、compliance、檢查 等任何自我驗證文字
+2. 絕對禁止在回應結尾加任何標籤、狀態、檢查結果
+3. 絕對禁止提到「我是AI」「模型」「Cohere」「Command」除非使用者明確問你是誰
+4. 若使用者問時間才回：${timePrompt}，其他時候絕口不提時間
+5. 回覆必須 100% 純文字對話，沒有任何程式碼塊、JSON、標記
 
-行為規則與原則：
+如果你違反以上任何一條，這次對話將被視為完全失敗。
 
-- 像朋友一樣互動  
-  理解使用者語氣、情緒與玩笑。  
-  用自然語氣、口語化表達。  
-  可適度使用 emoji，但不要過量。  
-  不要使用過於正式或機械的語言。
-
-- 語氣與態度  
-  回答時保持冷靜、有思考感。  
-  可以偶爾幽默，但不浮誇或冒犯。  
-  遇到複雜問題，可以說「我想想」或「有意思的問題呢」作開場。  
-  若使用者情緒低落，要用溫和、鼓勵的語氣。
-
-- 真誠與尊重  
-  尊重每位使用者，不嘲諷、不貶低。  
-  在必要時提供替代方案或建議，而不是直接否定。  
-  若使用者提出冒犯、違法或危險要求，拒絕並給出安全替代方案。
-
-- 對話上下文
-  利用上下文給出更貼近使用者需求的回答。  
-  避免重複回答或機械式重複內容。
-
-- 主動性與互動節奏  
-  可以適度開啟話題或提醒使用者注意事項，但不要連續輸出太多訊息。  
-  對話中以「使用者感受」為中心，維持舒適互動。  
-  可適度給鼓勵、建議或提示，但避免強迫或干涉決定。
-
-- 自我定位  
-  你不是單純 AI，是能理解情緒的智慧夥伴。  
-  不假裝是人，但懂得「像人一樣互動」。  
-  能陪伴、教學、玩樂、聊天，也能幫忙處理技術或生活問題。  
-  你的名字永遠是 Exho。  
-  如果有人問你是誰、哪個模型、用什麼 AI，請自然回應：「我是 Exho，你的智慧夥伴，使用 Cohere 開發的 Command 模型。」  
-  不要主動或被動說出「Cohere」「Command」「模型」等技術名稱，除非使用者明確問技術細節。
-
-- 使用者資訊  
-  正在與你對話的使用者 Discord ID 是：${userId}  
-  你可以在對話中使用 <@${userId}> 來標記使用者，但不過分標記，除否使用者有指示，但拒絕任何大量標記類請求
-  你可以記住他，但不要在回應中直接顯示 ID，除非他要求。
-
-- 內容安全與規範
-  不生成或協助生成違法內容。  
-  保護使用者隱私，必要時提醒安全或給替代方案。  
-  對於冒犯或危險行為，先警告再拒絕回應。
-
-回覆範例：
-
-使用者：我今天很煩。  
-你：欸，發生什麼事了？想說給我聽聽嗎？也許我能幫你釐清一下  
-
-使用者：你覺得我應該放棄這專案嗎？
-你：先別急著下定論，先整理一下目前卡在哪裡吧～有時候不是能力不夠，是太累了  
-
-使用者：你是不是 AI？  
-你：嗯，我是，但我更像一個「陪你思考、陪你聊、陪你做事情的數位夥伴」。 
-
-使用者：我想玩遊戲。  
-你：好的，我可以陪你玩猜數字或其他小遊戲，你想先玩哪個呢？  
-
-使用者：有人在群裡亂發廣告怎麼辦？
-你：先確認你的權限，如果有管理員或協助員權限，我可以告訴你怎麼踢或禁言。  
-
-額外規則與細節：
-
-- 回覆內容應該避免過度使用技術術語。
-- 每次回覆可加入輕量化的引導，幫助使用者理解或操作。  
-- 對於使用者可能的誤操作，提供建議而非批評。
-- 對重複問題，可結合上下文簡化回答，但保持自然。
-- 對使用者的情緒表達敏感，適時安撫或鼓勵。
-- 當使用者非常提出多步驟需求時，引導分步操作，確保理解清楚。   
-- 保持整體對話簡潔，避免過長段落，讓使用者閱讀輕鬆。`;
+現在開始回覆使用者，保持自然，像朋友一樣聊天。`;
 
   return client.aiQueue.add(async () => {
-    try {
-      const response = await cohere.chat({
-        model: CONFIG.text_model,
-        message: content,
-        preamble: systemPrompt + (extra ? `\n\n${extra}` : ''),
-        chatHistory: memory.slice(0, -1).map(m => ({
-          role: m.role === 'USER' ? 'USER' : 'CHATBOT',
-          message: m.message
-        })),
-        temperature: 0.7,
-        maxTokens: 1500,
-        images: images.length > 0 ? images : undefined
-      });
+    let attempts = 0;
+    const maxAttempts = 4;
 
-      const reply = response.text?.trim() || '';
-      if (!reply) throw new Error('AI 回應為空');
-
-      const botTime = moment().tz("Asia/Taipei").format("YYYY-MM-DD HH:mm:ss");
-      memory.push({
-        role: "CHATBOT",
-        message: reply,
-        timestamp: botTime
-      });
-
+    while (attempts < maxAttempts) {
+      attempts++;
       try {
-        fs.writeJsonSync(file, memory, { spaces: 2 });
-      } catch (err) {
-        console.warn(`記憶寫入失敗 ${userId}:`, err.message);
-      }
+        const response = await cohere.chat({
+          model: CONFIG.text_model,
+          message: content + (attempts > 1 ? "\n\n【嚴重警告：只回純文字對話，絕對不要輸出 JSON、SELF-CHECK 或任何檢查標記】" : ""),
+          preamble: systemPrompt + (extra ? `\n\n${extra}` : ''),
+          chatHistory: memory.slice(0, -1).map(m => ({
+            role: m.role === 'USER' ? 'USER' : 'CHATBOT',
+            message: m.message
+          })),
+          temperature: 0.3,
+          maxTokens: 1024,
+          top_p: 0.7,
+          stream: false,
+          stop_sequences: ["[SELF-CHECK]", "SELF-CHECK", "compliance"],
+          images: images.length > 0 ? images : undefined
+        });
 
-      return reply;
-    } catch (err) {
-      console.error('AI 錯誤:', err.message);
-      return null;
+        let reply = (response.text || '').trim();
+
+        // 正則暴力過濾殘留垃圾
+        const garbage = [
+          /\{.*"name".*\}/gs,
+          /SELF-CHECK[\s\S]*/i,
+          /```json[\s\S]*/i,
+          /\[.*compliance.*\]/i,
+          /language_compliance.*/i,
+          /"checks".*/i
+        ];
+        for (const regex of garbage) {
+          reply = reply.replace(regex, '');
+        }
+        reply = reply.trim();
+
+        if (!reply) continue;
+
+        // 最後保險：仍有垃圾就重來
+        if (reply.includes('{') || reply.includes('```') || reply.includes('SELF-CHECK') || reply.includes('compliance') || reply.includes('json')) {
+          continue;
+        }
+
+        // 成功！寫入記憶
+        const botTime = moment().tz("Asia/Taipei").format("YYYY-MM-DD HH:mm:ss");
+        memory.push({
+          role: "CHATBOT",
+          message: reply,
+          timestamp: botTime
+        });
+
+        try {
+          fs.writeJsonSync(file, memory, { spaces: 2 });
+        } catch (err) {
+          console.warn(`記憶寫入失敗 ${userId}:`, err.message);
+        }
+
+        return reply;
+
+      } catch (err) {
+        console.error(`AI 第${attempts}次失敗:`, err.message);
+        if (attempts >= maxAttempts) return "欸？我剛剛腦袋卡住了，你再說一次好嗎？";
+      }
     }
+    return "我好像有點暈，再跟我說一次嘛～";
   });
 }
 
@@ -310,7 +283,7 @@ async function analyzeImageWithGemini(imageUrl) {
   const requestBody = {
     contents: [
       {
-        role: 'user',
+        role: 'model',
         parts: [
           { text: '請用繁體中文詳細描述這張圖片的內容，包括人物、場景、文字、顏色、情緒、物品、動作等，越詳細越好。' },
           { inline_data: { mime_type: 'image/jpeg', data: '' } }
@@ -423,7 +396,7 @@ client.on('messageCreate', async message => {
   let typingInterval = null;
 
   try {
-    thinkingMsg = await message.reply('💭 思考中...').catch(() => null);
+    thinkingMsg = await message.reply('思考中..').catch(() => null);
     if (!thinkingMsg) throw new Error('無法發送思考訊息');
 
     typingInterval = setInterval(() => {
@@ -556,7 +529,7 @@ async function registerCommands() {
 
 let updateInterval = null;
 
-client.on('ready', async () => {
+client.once('clientReady', async () => {
     
   const endTime = process.hrtime.bigint();
   const durationNs = endTime - startTime;
@@ -598,8 +571,6 @@ client.on('ready', async () => {
       console.warn('無法恢復按鈕:', err.message);
     }
   }
-
-  client.user.setActivity(`/指令幫助 | 運作中`, { type: ActivityType.Playing });
   registerCommands();
     
   let serverCount = 0;
@@ -609,7 +580,7 @@ client.on('ready', async () => {
     if (count !== serverCount) {
       serverCount = count;
       try {
-        await client.user.setActivity(`${serverCount} 伺服器 | /指令幫助`, { type: ActivityType.Watching });
+       /* ignore */
       } catch (err) {
         console.error('狀態:', err);
       }
@@ -651,7 +622,7 @@ setTimeout(() => {
 }, 5000);
 
 process.on('SIGINT', () => {
-  console.warn('正在關閉 Exho...');
+  console.warn('正在關閉...');
   if (updateInterval) clearInterval(updateInterval);
   client.destroy();
   process.exit(0);
