@@ -170,6 +170,8 @@ node update.js
 ### 🌐 Web Search
 * **Description: Performs Google searches using the Google Custom JSON API and provides analyzed results.**
 
+---
+
 ### 👤 Memory System
 * **Description: Saves long-term interactions between users and the bot to enhance contextual understanding.**
 
