@@ -30,6 +30,7 @@ It is entirely powered by cloud-based LLMs (such as Cohere AI), requiring no loc
 ## 📲 Feature Showcase
 
 ![alt text](image/chat.jpg)
+![alt text](image/search.jpg)
 ![alt text](image/image.jpg)
 
 ---
