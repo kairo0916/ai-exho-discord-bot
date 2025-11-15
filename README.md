@@ -29,7 +29,7 @@
 ## 📲 展示功能
 
 ![alt text](image/chat.jpg)
-![alt text](
+![alt text](image/search.jpg)
 ![alt text](image/image.jpg)
 
 ---
