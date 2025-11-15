@@ -158,9 +158,6 @@ if (fs.existsSync(QUOTE_FILE)) {
   console.error('dailyQuote.txt 不存在！');
 }
 
-// ──────────────────────────────────────────────────────────────
-// 唯一改動的地方：全新 aiChat，徹底封殺 SELF-CHECK / JSON
-// ──────────────────────────────────────────────────────────────
 async function aiChat(userId, content, extra = '', images = []) {
   const file = path.join(DATA_DIR, `${userId}.json`);
   let memory = fs.existsSync(file) ? fs.readJsonSync(file) : [];
@@ -181,6 +178,36 @@ async function aiChat(userId, content, extra = '', images = []) {
   const taiwanTime = now.format("YYYY/MM/DD/ HH:mm:ss");
   const timePrompt = `${taiwanTime} （UTC+8）`;
 
+  let searchInfo = "";
+  if (process.env.SEARCH_API_KEY && process.env.SEARCH_ENGINE_ID) {
+    try {
+      const judge = await cohere.chat({
+        model: CONFIG.text_model,
+        message: content,
+        preamble: `你現在是判斷助手，只回一個字：YES 或 NO。\n判斷這句話是否需要「查詢最新網路資訊」才能正確回答？\n例如：\n「今天天氣如何？」→ YES\n「你好可愛」→ NO\n「2025總統是誰？」→ YES\n現在判斷：「${content}」`,
+        temperature: 0,
+        maxTokens: 10
+      });
+
+      if (judge.text?.trim().toUpperCase().includes("YES")) {
+        
+        const url = `https://www.googleapis.com/customsearch/v1?key=${process.env.SEARCH_API_KEY}&cx=${process.env.SEARCH_ENGINE_ID}&q=${encodeURIComponent(content)}`;
+        const res = await fetch(url);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.items && data.items.length > 0) {
+            searchInfo = data.items
+              .slice(0, 4)
+              .map(item => `• ${item.title}：${item.snippet}`)
+              .join("\n");
+          }
+        }
+      }
+    } catch (err) {
+      console.warn("Google 搜尋失敗（自動忽略）:", err.message);
+    }
+  }
+
   const systemPrompt = `你是 Exho，一個能聊天、幫忙、吐槽、陪伴使用者的智慧夥伴。
 你有溫柔但帶點機靈的語氣，會偶爾開玩笑但絕不冒犯。
 你的存在讓人感覺你「真的在聽」，不是機器，也不是客服。
@@ -188,11 +215,14 @@ async function aiChat(userId, content, extra = '', images = []) {
 使用者使用什麼語言就使用什麼語言回應。
 
 【最嚴格禁止事項 - 違反任何一項都算失敗】
-1. 絕對禁止在回應中出現 JSON、json、SELF-CHECK、self-check、compliance、檢查 等任何自我驗證文字
+1. 絕對禁止在回應中出現 SELF-CHECK、self-check、compliance、檢查 等任何自我驗證文字
 2. 絕對禁止在回應結尾加任何標籤、狀態、檢查結果
 3. 絕對禁止提到「我是AI」「模型」「Cohere」「Command」除非使用者明確問你是誰
 4. 若使用者問時間才回：${timePrompt}，其他時候絕口不提時間
-5. 回覆必須 100% 純文字對話，沒有任何程式碼塊、JSON、標記
+5. 回覆必須 100% 純文字對話，無 JSON
+6. 適當使用 <@${userId}> 標記使用者，但不過分標記，除非使用者有明確要求，但不接受大量標記。
+
+${searchInfo ? `【你剛查到最新資訊，請自然融入回答，絕對不要說「我查到」「根據網路」「我搜尋了一下」】\n${searchInfo}\n` : ''}
 
 如果你違反以上任何一條，這次對話將被視為完全失敗。
 
@@ -207,7 +237,7 @@ async function aiChat(userId, content, extra = '', images = []) {
       try {
         const response = await cohere.chat({
           model: CONFIG.text_model,
-          message: content + (attempts > 1 ? "\n\n【嚴重警告：只回純文字對話，絕對不要輸出 JSON、SELF-CHECK 或任何檢查標記】" : ""),
+          message: content + (attempts > 1 ? "\n\n【嚴重警告：只回純文字對話，絕對不要輸出 SELF-CHECK 或任何檢查標記】" : ""),
           preamble: systemPrompt + (extra ? `\n\n${extra}` : ''),
           chatHistory: memory.slice(0, -1).map(m => ({
             role: m.role === 'USER' ? 'USER' : 'CHATBOT',
@@ -223,11 +253,9 @@ async function aiChat(userId, content, extra = '', images = []) {
 
         let reply = (response.text || '').trim();
 
-        // 正則暴力過濾殘留垃圾
         const garbage = [
           /\{.*"name".*\}/gs,
           /SELF-CHECK[\s\S]*/i,
-          /```json[\s\S]*/i,
           /\[.*compliance.*\]/i,
           /language_compliance.*/i,
           /"checks".*/i
@@ -239,12 +267,10 @@ async function aiChat(userId, content, extra = '', images = []) {
 
         if (!reply) continue;
 
-        // 最後保險：仍有垃圾就重來
-        if (reply.includes('{') || reply.includes('```') || reply.includes('SELF-CHECK') || reply.includes('compliance') || reply.includes('json')) {
+        if (reply.includes('```') || reply.includes('SELF-CHECK') || reply.includes('compliance')) {
           continue;
         }
 
-        // 成功！寫入記憶
         const botTime = moment().tz("Asia/Taipei").format("YYYY-MM-DD HH:mm:ss");
         memory.push({
           role: "CHATBOT",
