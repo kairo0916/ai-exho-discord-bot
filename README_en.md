@@ -167,14 +167,17 @@ node update.js
 
 ---
 
+### 🌐 Web Search
+* **Description: Performs Google searches using the Google Custom JSON API and provides analyzed results.**
+
 ### 👤 Memory System
-* **Description:** Saves long-term interactions between users and the bot to enhance contextual understanding.
+* **Description: Saves long-term interactions between users and the bot to enhance contextual understanding.**
 
 ---
 
 ### 🖼️ Image Analysis
-* **Description:** Uses the Gemini 2.0 Flash model to analyze images. (Requires `GEMINI_API_KEY`)  
-  You can modify the vision model in your `.env` file under the `VISION_MODEL` field.
+* **Description: Uses the Gemini 2.0 Flash model to analyze images. (Requires `GEMINI_API_KEY`)  
+  You can modify the vision model in your `.env` file under the `VISION_MODEL` field.**
 
 ---
 
