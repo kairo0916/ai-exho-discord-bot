@@ -152,7 +152,7 @@ node bot.js
 ---
 
 ### 🌐 網路搜尋
-* **描述：使用 Google Custom JSON API 進行 Google 搜尋，並經過分析後給予結果。
+* **描述：使用 Google Custom JSON API 進行 Google 搜尋，並經過分析後給予結果。**
 
 ---
 
