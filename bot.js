@@ -101,7 +101,21 @@ const client = new Client({
     GatewayIntentBits.GuildMembers,
     GatewayIntentBits.GuildVoiceStates
   ],
-  partials: [Partials.Channel, Partials.Message],
+  partials: [Partials.Channel, Partials.Message, Partials.Reaction],
+  sweepers: {
+  messages: {
+    interval: 3600,
+    lifetime: 1800
+  },
+  users: {
+    interval: 3600,
+    filter: (user) => !user.bot
+  },
+  voiceStates: {
+    interval: 3600,
+    filter: (state) => !state.channelId
+  }
+},
 });
 
 client.ws.shards.forEach(shard => shard.setMaxListeners(20));
