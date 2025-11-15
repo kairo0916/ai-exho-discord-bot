@@ -309,7 +309,7 @@ async function analyzeImageWithGemini(imageUrl) {
   const requestBody = {
     contents: [
       {
-        role: 'model',
+        role: 'user',
         parts: [
           { text: '請用繁體中文詳細描述這張圖片的內容，包括人物、場景、文字、顏色、情緒、物品、動作等，越詳細越好。' },
           { inline_data: { mime_type: 'image/jpeg', data: '' } }
