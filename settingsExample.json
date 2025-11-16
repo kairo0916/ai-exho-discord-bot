@@ -1,32 +1,39 @@
 {
-  "timezone": "Asia/Taipei",
-  "prefix": "$",
-  "bot": {
-  "name": "Exho",
-  "author": "Kairo",
-  "description": "Exho - LLM BOT"
+  "time": {
+    "timezone": "Asia/Taipei",
+    "timeformat": "YYYY-MM-DD HH:mm:ss"
   },
+  "prefix": "$",
+  "prefix_reply": true,
+  "support_server": "",
+  "bot": {
+    "name": "Exho",
+    "id": null,
+    "author": "Kairo",
+    "description": "Exho - LLM BOT"
+  },
+  "ai_memory_limit": 50,
   "activity": [
     { "type": "WATCHING", "text": "好玩的機器人 = Exho" },
     { "type": "PLAYING", "text": "2048" }
-     ],
+  ],
   "version": "v1.3.0",
   "logging": {
-  "error_channel": null
+    "error_channel": null
   },
   "update": {
-  "auto_check": true,
-  "backup": true,
-  "interval_hours": 24
+    "auto_check": true,
+    "backup": true,
+    "interval_hours": 24
   },
   "github": {
-        "repository": "kairo0916/ai-exho-discord-bot",
-        "download_url": "https://github.com/kairo0916/ai-exho-discord-bot/archive/",
-        "api_url": "https://github.com/kairo0916/ai-exho-discord-bot/releases/latest"
-    },
-  "model": [
-      "text": "command-a-03-2025",
-      "vision": "gemini-2.0-flash"
-     ],
+    "repository": "kairo0916/ai-exho-discord-bot",
+    "download_url": "https://github.com/kairo0916/ai-exho-discord-bot/archive/",
+    "api_url": "https://github.com/kairo0916/ai-exho-discord-bot/releases/latest"
+  },
+  "model": {
+    "text": "command-a-03-2025",
+    "vision": "gemini-2.0-flash"
+  },
   "developer": ["userid1"]
 }
