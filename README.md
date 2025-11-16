@@ -86,10 +86,6 @@ SEARCH_ENGINE_ID=選填，不填就沒搜尋功能
 
 # ============================
 
-SERVER_LINK=你的支援群連結
-
-PREFIX_REPLY=是否開啟回文指令
-
 PTERO_API_KEY=Pterodactyl面板使用者API Key
 PTERO_URL=Pterodactyl面板連結，請包含 https:// http://
 SERVER_ID=Pterodactyl伺服器ID
@@ -110,7 +106,45 @@ DB_POOL_MAX=MairaDB連線最大數量，例如 20
 將 `settingsExample.json` 檔案重新命名為 `settings.json` 並填入所需的值。
 
 ```json
-
+{
+  "time": {
+  "timezone": "Asia/Taipei",
+  "timeformat: YYYY-MM-DD HH:mm:ss
+  },
+  "prefix": "$",
+  "prefix_reply": true,
+  "support_server": "",
+  "bot": {
+  "name": "Exho",
+  "id": null,
+  "author": "Kairo",
+  "description": "Exho - LLM BOT"
+  },
+  "ai_memory_limit": 50
+  "activity": [
+    { "type": "WATCHING", "text": "好玩的機器人 = Exho" },
+    { "type": "PLAYING", "text": "2048" }
+     ],
+  "version": "v1.3.0",
+  "logging": {
+  "error_channel": null
+  },
+  "update": {
+  "auto_check": true,
+  "backup": true,
+  "interval_hours": 24
+  },
+  "github": {
+        "repository": "kairo0916/ai-exho-discord-bot",
+        "download_url": "https://github.com/kairo0916/ai-exho-discord-bot/archive/",
+        "api_url": "https://github.com/kairo0916/ai-exho-discord-bot/releases/latest"
+    },
+  "model": {
+      "text": "command-a-03-2025",
+      "vision": "gemini-2.0-flash"
+     },
+  "developer": ["userid1"]
+}
 ```
 
 ### 步驟 3：查看 `./data` 資料夾內有沒有包含這些：
