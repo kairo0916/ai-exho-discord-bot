@@ -86,22 +86,9 @@ SEARCH_ENGINE_ID=選填，不填就沒搜尋功能
 
 # ============================
 
-ADMIN_ROLE_IDS=管理員身分組數字ID
-
-MEMORY_LIMIT=AI上下文數值，例 50
-
-TEXT_MODEL=command-r-03-2025
-VISION_MODEL=gemini-2.0-flash
-
-BOT_VERSION=V1.1.0
 SERVER_LINK=你的支援群連結
 
-DEV_USER=開發者1號使用者ID,開發者2號使用者ID（以此類推）
-
-BAN_CHANNEL=封鎖通知的頻道ID
-
 PREFIX_REPLY=是否開啟回文指令
-PREFIX=回文指令前綴，例填：$ 就是長這樣：$status
 
 PTERO_API_KEY=Pterodactyl面板使用者API Key
 PTERO_URL=Pterodactyl面板連結，請包含 https:// http://
@@ -118,7 +105,15 @@ DB_PORT=MairaDB伺服器端口
 DB_POOL_MAX=MairaDB連線最大數量，例如 20
 ```
 
-### 步驟 2：查看 `./data` 資料夾內有沒有包含這些：
+### 步驟 2：設定 `settingsExample.json` 檔案：
+
+將 `settingsExample.json` 檔案重新命名為 `settings.json` 並填入所需的值。
+
+```json
+
+```
+
+### 步驟 3：查看 `./data` 資料夾內有沒有包含這些：
 
 **請添加下列檔案並輸入內容。**
 
@@ -128,7 +123,7 @@ DB_POOL_MAX=MairaDB連線最大數量，例如 20
 4. `marriage.json` = `{}`
 5. `used_command.txt` = 不需要輸入，程式自動偵測，但也請新增此檔案。
 
-### 步驟 3：啟動機器人
+### 步驟 4：啟動機器人
 
 **設定完成後，使用指令把機器人開機：**
 
