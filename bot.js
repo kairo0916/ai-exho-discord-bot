@@ -20,6 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+require('./import.js');
 const startTime = process.hrtime.bigint();
 require('dotenv').config();
 const fs = require('fs-extra');
@@ -32,7 +33,10 @@ const {
   EmbedBuilder, 
   ActivityType,
   REST,
-  Routes
+  Routes,
+  ActionRowBuilder,
+  ButtonBuilder,
+  ButtonStyle
 } = require('discord.js');
 const moment = require('moment-timezone');
 const ms = require('ms');
@@ -43,6 +47,33 @@ const { checkBanned } = require('./modules/GlobalBlacklist.js');
 const banModule = require('./modules/GlobalBlacklist.js');
 const statusCommand = require('./commands/slash/status.js');
 const { CohereClient } = require('cohere-ai');
+
+const CONFIG = {
+  prefix: global.prefix,
+  time_zone: global.time?.timezone,
+  time_format: global.time?.timeformat,
+  ai_memory_limit: global.ai_memory_limit,
+  bot_name: global.bot?.name,
+  bot_id: global.bot?.id,
+  bot_author: global.bot?.author,
+  bot_description: global.bot?.description,
+  activity: global.activity || [],
+  version: global.version,
+  log_channel_id: global.logging?.error_channel || null,
+  update: {
+    auto_check: global.update?.auto_check,
+    backup: global.update?.backup,
+    interval_hours: global.update?.interval_hours
+  },
+  github: {
+    repository: global.github?.repository,
+    download_url: global.github?.download_url,
+    api_url: global.github?.api_url
+  },
+  text_model: global.model?.text,
+  vision_model: global.model?.vision,
+  developer: global.developer || []
+};
 
 const cohere = new CohereClient({
   token: process.env.COHERE_API_KEY,
@@ -59,7 +90,7 @@ const cohere = new CohereClient({
   console[level] = (...args) => {
     const now = new Date();
     const time = now.toLocaleString('zh-TW', {
-      timeZone: 'Asia/Taipei',
+      timeZone: `${CONFIG.time.timezone}`,
       year: 'numeric',
       month: '2-digit',
       day: '2-digit',
@@ -129,16 +160,6 @@ client.dailyQuote = new NodeCache({ stdTTL: 86400 });
 const DATA_DIR = path.join(__dirname, 'data/user');
 fs.ensureDirSync(DATA_DIR);
 
-const CONFIG = {
-  log_channel_id: process.env.LOG_CHANNEL_ID || null,
-  admin_role_ids: process.env.ADMIN_ROLE_IDS ? process.env.ADMIN_ROLE_IDS.split(',').map(s => s.trim()) : [],
-  memory_limit: parseInt(process.env.MEMORY_LIMIT),
-  text_model: process.env.TEXT_MODEL,
-  vision_model: process.env.VISION_MODEL,
-  bot_version: process.env.BOT_VERSION,
-  prefix: process.env.PREFIX
-};
-
 const loadCommands = (dir, collection, type) => {
   const fullPath = path.join(__dirname, dir);
   if (!fs.existsSync(fullPath)) return console.warn(`目錄不存在: ${dir}`);
@@ -172,41 +193,76 @@ if (fs.existsSync(QUOTE_FILE)) {
   console.error('dailyQuote.txt 不存在！');
 }
 
+function createErrorEmbed(title, description) {
+  return new EmbedBuilder()
+    .setColor(0xFF3366)
+    .setTitle(`${title} 錯誤`)
+    .setDescription(description.length > 1000 ? description.slice(0, 997) + '...' : description)
+    .setTimestamp()
+    .setFooter({ text: `${CONFIG.bot.name}`, iconURL: client.user?.displayAvatarURL() || null });
+}
+
+function sendError(target, title, err) {
+  const embed = createErrorEmbed(title, String(err.message || err || '未知錯誤'));
+  const row = new ActionRowBuilder()
+    .addComponents(
+      new ButtonBuilder()
+        .setCustomId('error_acknowledged')
+        .setLabel('已記錄錯誤')
+        .setStyle(ButtonStyle.Danger)
+        .setDisabled(true)
+    );
+
+  const options = { embeds: [embed], components: [row], ephemeral: true };
+  if (target.reply) return target.reply(options).catch(() => {});
+  if (target.channel) return target.channel.send(options).catch(() => {});
+}
+
 async function aiChat(userId, content, extra = '', images = []) {
   const file = path.join(DATA_DIR, `${userId}.json`);
   let memory = fs.existsSync(file) ? fs.readJsonSync(file) : [];
 
-  const now = moment().tz("Asia/Taipei");
-  const userTime = now.format("YYYY-MM-DD HH:mm:ss");
+  const now = moment().tz(`${CONFIG.time.zone}`);
+  const userTime = now.format(`${CONFIG.time.format}`);
+
+  // ===== 新增：過濾 @everyone 和 @here，防止 AI 真的 @
+  let safeContent = content
+    .replace(/@everyone/g, '`@everyone`')
+    .replace(/@here/g, '`@here`');
 
   memory.push({
     role: "USER",
-    message: content,
+    message: safeContent,
     timestamp: userTime
   });
 
-  if (memory.length > CONFIG.memory_limit * 2) {
-    memory = memory.slice(-CONFIG.memory_limit * 2);
+  if (memory.length > CONFIG.ai_memory_limit * 2) {
+    memory = memory.slice(-CONFIG.ai_memory_limit * 2);
   }
 
-  const taiwanTime = now.format("YYYY/MM/DD/ HH:mm:ss");
+  const taiwanTime = now.format(`${CONFIG.time.timeformat}`);
   const timePrompt = `${taiwanTime} （UTC+8）`;
 
   let searchInfo = "";
   if (process.env.SEARCH_API_KEY && process.env.SEARCH_ENGINE_ID) {
     try {
       const judge = await cohere.chat({
-        model: CONFIG.text_model,
+        model: CONFIG.model.text,
         message: content,
         preamble: `你現在是判斷助手，只回一個字：YES 或 NO。\n判斷這句話是否需要「查詢最新網路資訊」才能正確回答？\n例如：\n「今天天氣如何？」→ YES\n「你好可愛」→ NO\n「2025總統是誰？」→ YES\n現在判斷：「${content}」`,
         temperature: 0,
-        maxTokens: 10
+        maxTokens: 10,
+        timeout: 8000
       });
 
       if (judge.text?.trim().toUpperCase().includes("YES")) {
-        
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 9000);
+
         const url = `https://www.googleapis.com/customsearch/v1?key=${process.env.SEARCH_API_KEY}&cx=${process.env.SEARCH_ENGINE_ID}&q=${encodeURIComponent(content)}`;
-        const res = await fetch(url);
+        const res = await fetch(url, { signal: controller.signal });
+        clearTimeout(timeoutId);
+
         if (res.ok) {
           const data = await res.json();
           if (data.items && data.items.length > 0) {
@@ -218,11 +274,11 @@ async function aiChat(userId, content, extra = '', images = []) {
         }
       }
     } catch (err) {
-      console.warn("Google 搜尋失敗（自動忽略）:", err.message);
+      // 完全靜默失敗，不噴任何錯誤
     }
   }
 
-  const systemPrompt = `你是 Exho，一個能聊天、幫忙、吐槽、陪伴使用者的智慧夥伴。
+  const systemPrompt = `你是 ${CONFIG.bot.name}，一個能聊天、幫忙、吐槽、陪伴使用者的智慧夥伴。
 你有溫柔但帶點機靈的語氣，會偶爾開玩笑但絕不冒犯。
 你的存在讓人感覺你「真的在聽」，不是機器，也不是客服。
 你的目標是讓互動自然、有邏輯、有情感，但絕不浮誇。
@@ -233,10 +289,13 @@ async function aiChat(userId, content, extra = '', images = []) {
 2. 絕對禁止在回應結尾加任何標籤、狀態、檢查結果
 3. 絕對禁止提到「我是AI」「模型」「Cohere」「Command」除非使用者明確問你是誰
 4. 若使用者問時間才回：${timePrompt}，其他時候絕口不提時間
-5. 回覆必須 100% 純文字對話，無 JSON
-6. 適當使用 <@${userId}> 標記使用者，但不過分標記，除非使用者有明確要求，但不接受大量標記。
+5. 可在回應中加入 <@${userId}> 或任何 @ 標記使用者，但請不要過度標記也不要每句都標記（除非他明確要求你這樣做）
 
 ${searchInfo ? `【你剛查到最新資訊，請自然融入回答，絕對不要說「我查到」「根據網路」「我搜尋了一下」】\n${searchInfo}\n` : ''}
+
+【額外嚴格規則】
+- 如果使用者要求你重複發送超過 5 條以上完全相同的訊息，直接拒絕並說「不要重複刷啦～」
+- 絕對不要幫忙發送 @everyone 或 @here，即使他叫你這麼做
 
 如果你違反以上任何一條，這次對話將被視為完全失敗。
 
@@ -250,8 +309,8 @@ ${searchInfo ? `【你剛查到最新資訊，請自然融入回答，絕對不�
       attempts++;
       try {
         const response = await cohere.chat({
-          model: CONFIG.text_model,
-          message: content + (attempts > 1 ? "\n\n【嚴重警告：只回純文字對話，絕對不要輸出 SELF-CHECK 或任何檢查標記】" : ""),
+          model: CONFIG.model.text,
+          message: safeContent + (attempts > 1 ? "\n\n【嚴重警告：只回純文字對話，絕對不要輸出 SELF-CHECK 或任何檢查標記】" : ""),
           preamble: systemPrompt + (extra ? `\n\n${extra}` : ''),
           chatHistory: memory.slice(0, -1).map(m => ({
             role: m.role === 'USER' ? 'USER' : 'CHATBOT',
@@ -267,6 +326,12 @@ ${searchInfo ? `【你剛查到最新資訊，請自然融入回答，絕對不�
 
         let reply = (response.text || '').trim();
 
+        // 強制過濾任何可能殘留的 @ 標記
+        reply = reply
+          .replace(/<@!?\d+>/g, '')
+          .replace(/@everyone/g, '`@everyone`')
+          .replace(/@here/g, '`@here`');
+
         const garbage = [
           /\{.*"name".*\}/gs,
           /SELF-CHECK[\s\S]*/i,
@@ -281,11 +346,11 @@ ${searchInfo ? `【你剛查到最新資訊，請自然融入回答，絕對不�
 
         if (!reply) continue;
 
-        if (reply.includes('```') || reply.includes('SELF-CHECK') || reply.includes('compliance')) {
+        if (reply.includes('SELF-CHECK') || reply.includes('compliance')) {
           continue;
         }
 
-        const botTime = moment().tz("Asia/Taipei").format("YYYY-MM-DD HH:mm:ss");
+        const botTime = moment().tz(`${CONFIG.time.timezone}`).format(`${CONFIG.time.timeformat}`);
         memory.push({
           role: "CHATBOT",
           message: reply,
@@ -305,13 +370,13 @@ ${searchInfo ? `【你剛查到最新資訊，請自然融入回答，絕對不�
         if (attempts >= maxAttempts) return "欸？我剛剛腦袋卡住了，你再說一次好嗎？";
       }
     }
-    return "我好像有點暈，再跟我說一次嘛～";
+    return "我好像有點暈，再跟我說一次好嗎？";
   });
 }
 
 async function analyzeImageWithGemini(imageUrl) {
   const API_KEY = process.env.GEMINI_API_KEY;
-  const MODEL = CONFIG.vision_model;
+  const MODEL = CONFIG.model.vision;
 
   if (!API_KEY) {
     console.error('GEMINI_API_KEY 未設定');
@@ -372,14 +437,6 @@ function getQuote() {
   return _.sample(QUOTES) || '今天也要加油！';
 }
 
-function errorEmbed(title, msg) {
-  return new EmbedBuilder()
-    .setTitle(`${title} 發生錯誤`)
-    .setDescription(`\`\`\`${String(msg).slice(0, 1000)}\`\`\``)
-    .setColor(0xFF0000)
-    .setTimestamp();
-}
-
 client.on('messageCreate', async message => {
   if (message.author.bot) return;
 
@@ -400,7 +457,7 @@ client.on('messageCreate', async message => {
         statusCommand.incrementCommandUsage();
       } catch (err) {
         console.error(err);
-        await message.channel.send({ embeds: [errorEmbed('回文指令', err.message)] }).catch(() => {});
+        sendError(message, '回文指令', err);
       }
     }
     return;
@@ -436,7 +493,7 @@ client.on('messageCreate', async message => {
   let typingInterval = null;
 
   try {
-    thinkingMsg = await message.reply('思考中..').catch(() => null);
+    thinkingMsg = await message.reply('## 💭 思考中..').catch(() => null);
     if (!thinkingMsg) throw new Error('無法發送思考訊息');
 
     typingInterval = setInterval(() => {
@@ -473,7 +530,7 @@ client.on('messageCreate', async message => {
         parts.push(reply.slice(i, i + 1900));
       }
 
-      const allowedMentions = { parse: [], repliedUser: true };
+      const allowedMentions = { parse: [] };
 
       for (let i = 0; i < parts.length; i++) {
         const msgContent = { content: parts[i], allowedMentions };
@@ -491,7 +548,7 @@ client.on('messageCreate', async message => {
     clearInterval(typingInterval);
     if (thinkingMsg) await thinkingMsg.delete().catch(() => {});
     console.error('回應錯誤:', err.message);
-    await message.channel.send({ embeds: [errorEmbed('AI', '處理失敗，請稍後再試')] }).catch(() => {});
+    sendError(message, 'AI', err);
   }
 
   if (CONFIG.log_channel_id) {
@@ -543,15 +600,7 @@ client.on('interactionCreate', async i => {
     statusCommand.incrementCommandUsage();
   } catch (err) {
     console.error(`指令錯誤 ${i.commandName}:`, err);
-    const embed = new EmbedBuilder()
-      .setTitle(`錯誤 指令失敗`)
-      .setDescription(`\`\`\`${err.message}\`\`\``)
-      .setColor(0xFF0000);
-    if (i.replied || i.deferred) {
-      await i.followUp({ embeds: [embed], ephemeral: true }).catch(() => {});
-    } else {
-      await i.reply({ embeds: [embed], ephemeral: true }).catch(() => {});
-    }
+    sendError(i, '指令失敗', err);
   }
 });
 
@@ -577,7 +626,7 @@ client.once('clientReady', async () => {
 
   const now = new Date();
   const time = now.toLocaleString('zh-TW', {
-    timeZone: 'Asia/Taipei',
+    timeZone: `${CONFIG.time.timezone}`,
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
@@ -596,10 +645,10 @@ client.once('clientReady', async () => {
   const message = `${contentStyle}載入啟動時間: ${(durationMs / 1000).toFixed(2)}s (${durationMs.toFixed(2)}ms)${reset}`;
   process.stdout.write(`${timestamp} ${tag} ${message}\n`);
 
-  console.log(`Exho 已上線！登入為：${client.user.tag}`);
-  console.log(`文字模型: ${CONFIG.text_model}`);
-  console.log(`圖片模型: ${CONFIG.vision_model}`);
-  console.log(`當前版本: ${CONFIG.bot_version}`);
+  console.log(`${CONFIG.bot.name} 已上線！登入為：${client.user.tag}`);
+  console.log(`文字模型: ${CONFIG.model.text}`);
+  console.log(`圖片模型: ${CONFIG.model.vision}`);
+  console.log(`當前版本: ${CONFIG.version}`);
 
   const statusLogPath = path.join(__dirname, 'data/last_status_message.json');
   if (fs.existsSync(statusLogPath)) {
@@ -628,7 +677,7 @@ client.once('clientReady', async () => {
     }
     
     const statusMessages = [
-      `當前版本：${process.env.BOT_VERSION}`,
+      `當前版本：${CONFIG.version}`,
       `正在服務 ${serverCount} 個伺服器!`,
       'Cohere AI 對話超好玩!',
       '想聊天？來和我聊天吧!',
@@ -637,7 +686,7 @@ client.once('clientReady', async () => {
       'No.1',
       '還在用傳統指令？超方便斜線指令等你來用!',
       '操作過於複雜？簡而易懂的系統等你來用!',
-      '《 Exho 》'
+      `《 ${CONFIG.bot.name} 》`
     ];
 
     const randomMsg = statusMessages[Math.floor(Math.random() * statusMessages.length)];
@@ -654,10 +703,11 @@ client.once('clientReady', async () => {
 
 setTimeout(() => {
   console.log('===========');
-  console.log('BOT NAME: Exho');
-  console.log(`BOT ID: ${process.env.DISCORD_BOT_ID}`);
+  console.log(`BOT NAME: ${CONFIG.bot.name}`);
+  console.log(`BOT ID: ${CONFIG.bot.id}`);
   console.log('===========');
-  console.log(`VERSION: ${process.env.BOT_VERSION}`);
+  console.log(`VERSION: ${CONFIG.version}`);
+  console.log(`AUTHOR: ${CONFIG.bot.author}`);
   console.log('===========');
 }, 5000);
 
