@@ -50,6 +50,8 @@ const { CohereClient } = require('cohere-ai');
 
 const CONFIG = {
   prefix: global.prefix,
+  prefix_reply: global.prefix_reply,
+  support_server: global.support_server,
   time_zone: global.time?.timezone,
   time_format: global.time?.timeformat,
   ai_memory_limit: global.ai_memory_limit,
